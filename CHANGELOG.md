@@ -177,6 +177,36 @@ The entries below describe the current prototype state._
   `--reverse` re-injects the flag into regenerated backports, forward drops it
   behind `// Package:`-verified markers), and the trio tests pin
   `meta.show_in_rest === true` with the high-level `public` meta unchanged.
+### Changed
+
+- `core/users-query` (**breaking**, core trunk r65002): the flat `registered_date`
+  output field became a `registered` object with dotted sub-fields —
+  `registered.site` (the site's timezone) and `registered.gmt` (UTC), both
+  null-on-unusable-stored-date ISO 8601 strings — and the `fields` input now
+  accepts dotted paths via `get_field_paths()`/`is_field_requested()`
+  (`rest_is_field_included()`): requesting `registered` returns both sub-fields,
+  a sub-field path returns only that one, and the `fields` input `enum` lists
+  the dotted paths. Synced with the AI plugin's 1.5.0 copies; the fixture and
+  the backport are regenerated through `tools/coreify.php --reverse`.
+- `core/content-query` (core trunk r65075-era): the author-visibility rework —
+  `get_visible_author()` resolves an author through one memoized rule per query
+  (`$visible_authors`), with an `edit_user` capability branch and the posts
+  count restricted to publicly viewable post types exposed through
+  `show_in_abilities`; the `author` field nulls `name`/`slug` when the current
+  user may not see the author. The `where.author_slug` string filter became a
+  `where.author` object with `id`/`slug` (error paths `where[author]`,
+  `where[author][id]`, `where[author][slug]`); a slug that names no user, a user
+  the current user may not see, or an `id`/`slug` pair naming different users
+  match no post (an empty page, not an error). The `date.local` output path
+  became `date.site`, and the class ships trunk's `array_all()`/`array_any()`
+  calls (runtime-safe: core's own compat polyfills cover PHP < 8.4 — the plugin
+  copies swap in loops only against its static-analysis stubs).
+- Trunk fixture snapshots: content and users refreshed from today's
+  wordpress-develop trunk (the r65075-/r65002-era classes; settings was already
+  current) with refreshed provenance headers, regenerating both backports
+  through `coreify --reverse` — the §7.0 `show_in_rest` `// Package:` meta
+  accommodation survives regeneration by design.
+
 ### Removed
 
 - `wp/post-create` — the self-authored experimental write-ability prototype

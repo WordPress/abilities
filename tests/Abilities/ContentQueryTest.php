@@ -21,6 +21,7 @@ use WordPress\Abilities\Registrar;
 use WordPress\Abilities\Support\Features;
 use WP_Abilities_Registry;
 use WP_Error;
+use WP_User;
 use Yoast\PHPUnitPolyfills\TestCases\TestCase;
 
 /**
@@ -76,6 +77,11 @@ final class ContentQueryTest extends TestCase {
 			if ( (int) $id > 1 ) {
 				wp_delete_user( (int) $id );
 			}
+		}
+		// Remove any previously persisted cq_usereditor test role (an earlier version of
+		// these tests created it via add_role(), which writes to the site's role option).
+		if ( wp_roles()->get_role( 'cq_usereditor' ) ) {
+			remove_role( 'cq_usereditor' );
 		}
 		$this->user_ids = array();
 		$this->post_ids = array();
@@ -246,12 +252,18 @@ final class ContentQueryTest extends TestCase {
 		self::assertSame( array( 'where' ), $schema['required'] );
 
 		$where = $schema['properties']['where'];
-		self::assertSame( array( 'type', 'ids', 'slugs', 'status', 'author_slug', 'parent' ), array_keys( $where['properties'] ) );
+		self::assertSame( array( 'type', 'ids', 'slugs', 'status', 'author', 'parent' ), array_keys( $where['properties'] ) );
 		self::assertSame( array( 'type' ), $where['required'] );
 		self::assertSame( array_values( get_post_types( array( 'show_in_abilities' => true ) ) ), $where['properties']['type']['enum'] );
 		self::assertSame( 100, $where['properties']['ids']['maxItems'] );
 		self::assertSame( 100, $where['properties']['slugs']['maxItems'] );
 		self::assertSame( array_values( get_post_stati( array( 'internal' => false ) ) ), $where['properties']['status']['items']['enum'] );
+		self::assertSame( 'object', $where['properties']['author']['type'], 'r65075: the author filter is an id/slug object now.' );
+		self::assertFalse( $where['properties']['author']['additionalProperties'] );
+		self::assertSame( 1, $where['properties']['author']['minProperties'] );
+		self::assertSame( 'integer', $where['properties']['author']['properties']['id']['type'] );
+		self::assertSame( 1, $where['properties']['author']['properties']['id']['minimum'] );
+		self::assertSame( 1, $where['properties']['author']['properties']['slug']['minLength'] );
 
 		self::assertSame(
 			array(
@@ -259,10 +271,10 @@ final class ContentQueryTest extends TestCase {
 				'type',
 				'status',
 				'date',
-				'date.local',
+				'date.site',
 				'date.gmt',
 				'modified',
-				'modified.local',
+				'modified.site',
 				'modified.gmt',
 				'slug',
 				'link',
@@ -312,7 +324,7 @@ final class ContentQueryTest extends TestCase {
 		);
 		self::assertSame( array( 'id' ), $post['required'] );
 		self::assertSame( array( 'total', 'total_pages' ), array_keys( $schema['properties']['pagination']['properties'] ) );
-		self::assertSame( array( 'local', 'gmt' ), array_keys( $post['properties']['date']['properties'] ) );
+		self::assertSame( array( 'site', 'gmt' ), array_keys( $post['properties']['date']['properties'] ), 'r65002-era: `date.site` replaces `date.local`, as in users-query `registered.site`.' );
 		self::assertSame( array( 'raw', 'rendered', 'protected' ), array_keys( $post['properties']['content']['properties'] ) );
 		self::assertSame( array( 'id', 'name', 'slug' ), array_keys( $post['properties']['author']['properties'] ) );
 	}
@@ -405,8 +417,8 @@ final class ContentQueryTest extends TestCase {
 
 	/**
 	 * Fail-closed malformed-filter rejections in the execute callback (ungated
-	 * transports bypass validation, so these run through it directly), plus the
-	 * schema-reachable parent/author_slug rejections through the real ability.
+	 * transports bypass validation, so these run through it directly), plus
+	 * schema-reachable parent/author rejections through the real ability.
 	 */
 	public function test_execute_fail_closed_malformed_filters(): void {
 		$ability = $this->get_registered();
@@ -504,18 +516,115 @@ final class ContentQueryTest extends TestCase {
 			'The status filter must list valid post statuses.'
 		);
 
-		// Unknown author slug (schema-reachable; goes through validate via the input, so
-		// schema validation passes and the filter rejection fires).
-		$author = $this->execute_raw(
-			$ability,
+		// The author filter is an object with an `id` and/or a `slug` (r65075). Filter-level
+		// rejections (unvalidated transport path).
+		$this->assert_wp_error(
+			'content_invalid_filter',
+			$this->execute_raw(
+				$ability,
+				array(
+					'where' => array(
+						'type'   => 'post',
+						'author' => array(),
+					),
+				)
+			),
+			null,
+			array(
+				'status' => 400,
+				'params' => array( 'where[author]' => 'The author filter must be an object with an id or a slug.' ),
+			)
+		);
+		$this->assert_wp_error(
+			'content_invalid_filter',
+			$this->execute_raw(
+				$ability,
+				array(
+					'where' => array(
+						'type'   => 'post',
+						'author' => array( 'bogus' => 1 ),
+					),
+				)
+			),
+			null,
+			array(
+				'status' => 400,
+				'params' => array( 'where[author]' => 'The author filter must be an object with an id or a slug.' ),
+			)
+		);
+		$this->assert_wp_error(
+			'content_invalid_filter',
+			$this->execute_raw(
+				$ability,
+				array(
+					'where' => array(
+						'type'   => 'post',
+						'author' => array( 'id' => 0 ),
+					),
+				)
+			),
+			null,
+			array(
+				'status' => 400,
+				'params' => array( 'where[author][id]' => 'The author ID must be a positive integer.' ),
+			)
+		);
+		$this->assert_wp_error(
+			'content_invalid_filter',
+			$this->execute_raw(
+				$ability,
+				array(
+					'where' => array(
+						'type'   => 'post',
+						'author' => array( 'slug' => '' ),
+					),
+				)
+			),
+			null,
+			array(
+				'status' => 400,
+				'params' => array( 'where[author][slug]' => 'The author slug must be a non-empty string.' ),
+			)
+		);
+
+		// Schema-reachable author shapes through the validated transport: a non-object author
+		// fails validation (a schema rejection, not a filter rejection), while a well-formed
+		// `id` + unknown `slug` passes validation and reaches the execute callback, which
+		// answers an empty page (an author that names no visible user matches no post; no error).
+		$scalar_author = $ability->execute(
 			array(
 				'where' => array(
-					'type'        => 'post',
-					'author_slug' => 'no-such-user',
+					'type'   => 'post',
+					'author' => 'no-such-user',
 				),
 			)
 		);
-		$this->assert_wp_error( 'content_invalid_filter', $author, 'The author_slug filter must be the slug of an existing user.' );
+		self::assertInstanceOf(
+			WP_Error::class,
+			$scalar_author,
+			'A non-object author filter is rejected by schema validation.'
+		);
+		self::assertNotSame( 'content_invalid_filter', $scalar_author->get_error_code() );
+
+		$no_such_user = $this->execute_raw(
+			$ability,
+			array(
+				'where' => array(
+					'type'   => 'post',
+					'author' => array(
+						'id'   => 999999999,
+						'slug' => 'no-such-user',
+					),
+				),
+			)
+		);
+		self::assertNotInstanceOf(
+			WP_Error::class,
+			$no_such_user,
+			'An author slug that names no user matches no post, rather than erroring.'
+		);
+		self::assertSame( 0, $no_such_user['pagination']['total'] );
+		self::assertSame( array(), $no_such_user['items'] );
 	}
 
 	/**
@@ -593,5 +702,166 @@ final class ContentQueryTest extends TestCase {
 		self::assertNotInstanceOf( WP_Error::class, $withheld, 'Listing a draft by ID passes the ids gate but the rows are withheld.' );
 		self::assertSame( array(), $withheld['items'], "Another user's draft is withheld from a subscriber." );
 		self::assertLessThanOrEqual( 1, $withheld['pagination']['total'] );
+	}
+
+	/**
+	 * The r65075 author filter: an `id` matches the stored author ID, a `slug` resolves
+	 * through the visible-author rule, and an `id` + a `slug` that name different users
+	 * match no post. The author field of matched posts reports the same author.
+	 */
+	public function test_execute_author_object_filter(): void {
+		$ability = $this->get_registered();
+		self::assertNotNull( $ability );
+		$this->create_mocked_data_set();
+		$admin_id = $this->user_ids['admin'];
+		$draft_id = $this->post_ids['draft-admin'];
+		wp_set_current_user( $admin_id );
+
+		$by_id = $ability->execute(
+			array(
+				'where'  => array(
+					'type'   => 'post',
+					'status' => array( 'publish', 'draft' ),
+					'author' => array( 'id' => $admin_id ),
+				),
+				'fields' => array( 'id', 'author' ),
+			)
+		);
+		self::assertIsArray( $by_id );
+		self::assertSame( array( $draft_id ), wp_list_pluck( $by_id['items'], 'id' ), 'The `author.id` filter matches the stored author ID.' );
+		self::assertSame(
+			array(
+				'id'   => $admin_id,
+				'name' => 'cqadmin',
+				'slug' => 'cqadmin',
+			),
+			$by_id['items'][0]['author'],
+			'The author field resolves the same user for the current user.'
+		);
+
+		$by_slug = $ability->execute(
+			array(
+				'where' => array(
+					'type'   => 'post',
+					'status' => array( 'publish', 'draft' ),
+					'author' => array( 'slug' => 'cqadmin' ),
+				),
+			)
+		);
+		self::assertIsArray( $by_slug );
+		self::assertSame( $by_id['pagination']['total'], $by_slug['pagination']['total'], 'The `author.slug` filter and the `author.id` filter name the same user.' );
+
+		$mismatch = $ability->execute(
+			array(
+				'where' => array(
+					'type'   => 'post',
+					'status' => array( 'publish', 'draft' ),
+					'author' => array(
+						'id'   => $admin_id,
+						'slug' => 'cqsubscriber',
+					),
+				),
+			)
+		);
+		self::assertIsArray( $mismatch );
+		self::assertSame( 0, $mismatch['pagination']['total'], 'An `id` and a `slug` that name different users match no post.' );
+		self::assertSame( array(), $mismatch['items'] );
+	}
+
+	/**
+	 * The author field follows the same visibility rule the filter does: an author the
+	 * current user may not see reports `null` name and slug (the ID stays), while a user
+	 * with `edit_users` (the `edit_user` branch) or one whose posts count resolves sees them.
+	 */
+	public function test_author_field_resolves_visible_author(): void {
+		$ability = $this->get_registered();
+		self::assertNotNull( $ability );
+		$this->create_mocked_data_set();
+
+		$this->user_ids['quiet']       = (int) wp_insert_user(
+			array(
+				'user_login' => 'cqquiet',
+				'role'       => 'subscriber',
+			)
+		);
+		$this->post_ids['quiet-draft'] = (int) wp_insert_post(
+			array(
+				'post_title'   => 'Quiet draft',
+				'post_content' => 'Draft content.',
+				'post_status'  => 'draft',
+				'post_type'    => 'post',
+				'post_author'  => $this->user_ids['quiet'],
+			)
+		);
+
+		// A subscriber sees the ID but not the identity of a draft's author (the row itself
+		// is withheld for a subscriber, so use the id-level fields of a readable query).
+		wp_set_current_user( $this->user_ids['subscriber'] );
+		$peep = $this->invoke_private( $ability, 'format_post', get_post( $this->post_ids['quiet-draft'] ), array( 'author.id', 'author.name', 'author.slug' ) );
+		self::assertIsArray( $peep['author'], 'The `author` field resolves through the visible-author rule.' );
+		self::assertSame(
+			array(
+				'id'   => $this->user_ids['quiet'],
+				'name' => null,
+				'slug' => null,
+			),
+			$peep['author'],
+			'An author the current user may not see is reported like an unpublishable identity: null name and slug.'
+		);
+
+		// A user who can edit the author's profile sees the identity: the `edit_user`
+		// branch (r65075) does not need `list_users`, `edit_others_posts`, or a posts
+		// count (the draft itself is unpublished, so the count is zero). The caps ride
+		// on the user directly, never as a role, so no site role state is touched.
+		$this->user_ids['usereditor'] = (int) wp_insert_user(
+			array(
+				'user_login' => 'cqusereditor',
+				'role'       => 'subscriber',
+			)
+		);
+		$usereditor                   = get_userdata( $this->user_ids['usereditor'] );
+		self::assertInstanceOf( WP_User::class, $usereditor );
+		$usereditor->add_cap( 'edit_posts' );
+		$usereditor->add_cap( 'edit_users' );
+		wp_set_current_user( $this->user_ids['usereditor'] );
+		$sees = $this->invoke_private( $ability, 'format_post', get_post( $this->post_ids['quiet-draft'] ), array( 'author.id', 'author.name', 'author.slug' ) );
+		self::assertIsArray( $sees['author'] );
+		self::assertSame(
+			array(
+				'id'   => $this->user_ids['quiet'],
+				'name' => 'cqquiet',
+				'slug' => 'cqquiet',
+			),
+			$sees['author'],
+			'The `edit_user` branch opens the identity of an author the current user may edit, where the pre-r65075 rule (a posts count over viewable post types) would not.'
+		);
+	}
+
+	/**
+	 * The r65075 visible-author memo: one rule evaluation per author per query, and a
+	 * memoized judgment is respected without re-evaluating caps or posts counts.
+	 */
+	public function test_get_visible_author_is_memoized_per_query(): void {
+		$ability = $this->get_registered();
+		self::assertNotNull( $ability );
+		$this->create_mocked_data_set();
+		wp_set_current_user( $this->user_ids['subscriber'] );
+
+		// Seed the memo, then confirm it is honored for another user (the self branch
+		// never reaches the memo, so the memo target must be a different user).
+		$prop = ( new ReflectionClass( $ability ) )->getProperty( 'visible_authors' );
+		$prop->setAccessible( true );
+		$prop->setValue( $ability, array( $this->user_ids['admin'] => false ) );
+		self::assertNull( $this->invoke_private( $ability, 'get_visible_author', $this->user_ids['admin'] ), 'The memoized false short-circuits the posts count.' );
+
+		$prop->setValue( $ability, array( $this->user_ids['admin'] => true ) );
+		$memoized = $this->invoke_private( $ability, 'get_visible_author', $this->user_ids['admin'] );
+		self::assertInstanceOf( WP_User::class, $memoized, 'A memoized positive resolves the user without re-evaluating anything.' );
+		self::assertSame( $this->user_ids['admin'], $memoized->ID );
+
+		// A fresh query resets the memo.
+		$this->execute_raw( $ability, array( 'where' => array( 'type' => 'post' ) ) );
+		$fresh = $prop->getValue( $ability );
+		self::assertSame( array(), $fresh, 'The author visibility memo is per query and starts empty.' );
 	}
 }

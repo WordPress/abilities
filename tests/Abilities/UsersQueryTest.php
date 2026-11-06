@@ -47,7 +47,31 @@ final class UsersQueryTest extends TestCase {
 		'last_name',
 		'nickname',
 		'locale',
-		'registered_date',
+		'registered',
+		'roles',
+	);
+
+	/**
+	 * The field paths the trunk `fields` input accepts, in get_field_paths() order
+	 * (r65002): each field followed by the path of each of its sub-fields.
+	 */
+	private const TRUNK_FIELD_PATHS = array(
+		'id',
+		'name',
+		'description',
+		'url',
+		'link',
+		'slug',
+		'avatar_urls',
+		'username',
+		'email',
+		'first_name',
+		'last_name',
+		'nickname',
+		'locale',
+		'registered',
+		'registered.site',
+		'registered.gmt',
 		'roles',
 	);
 
@@ -323,7 +347,7 @@ final class UsersQueryTest extends TestCase {
 			array_values( array_filter( get_post_types(), 'is_post_type_viewable' ) ),
 			$where['has_published_posts']['anyOf'][1]['items']['enum']
 		);
-		self::assertSame( self::TRUNK_FIELDS, $input['properties']['fields']['items']['enum'] );
+		self::assertSame( self::TRUNK_FIELD_PATHS, $input['properties']['fields']['items']['enum'], 'r65002: the fields enum lists dotted paths.' );
 		self::assertSame( 100, $input['properties']['pagination']['properties']['per_page']['maximum'] );
 
 		$output = $ability->get_output_schema();
@@ -443,7 +467,7 @@ final class UsersQueryTest extends TestCase {
 		$this->create_mocked_users();
 		$input = array(
 			'where'  => array( 'ids' => array( $this->user_ids['post_author'] ) ),
-			'fields' => array( 'username', 'email', 'first_name', 'registered_date', 'roles' ),
+			'fields' => array( 'username', 'email', 'first_name', 'registered', 'roles' ),
 		);
 
 		wp_set_current_user( $this->user_ids['subscriber'] );
@@ -456,7 +480,9 @@ final class UsersQueryTest extends TestCase {
 		self::assertSame( 'uqpostauthor', $self['username'] );
 		self::assertSame( 'uqpostauthor@example.com', $self['email'] );
 		self::assertSame( 'First', $self['first_name'] );
-		self::assertMatchesRegularExpression( '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00$/', $self['registered_date'] );
+		self::assertSame( array( 'site', 'gmt' ), array_keys( $self['registered'] ), 'r65002: the registration date reports through `registered.site`/`registered.gmt`.' );
+		self::assertMatchesRegularExpression( '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00$/', $self['registered']['site'] );
+		self::assertMatchesRegularExpression( '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00$/', $self['registered']['gmt'] );
 		self::assertSame( array( 'author' ), $self['roles'] );
 
 		wp_set_current_user( $this->user_ids['administrator'] );
@@ -467,6 +493,44 @@ final class UsersQueryTest extends TestCase {
 		$default  = $ability->execute( array( 'where' => array( 'ids' => array( $this->user_ids['post_author'] ) ) ) )['items'][0];
 		$expected = get_option( 'show_avatars' ) ? array( 'id', 'name', 'link', 'slug', 'avatar_urls' ) : array( 'id', 'name', 'link', 'slug' );
 		self::assertSame( $expected, array_keys( $default ) );
+	}
+
+	/**
+	 * The r65002 dotted-field projection: requesting `registered` returns both of its
+	 * sub-fields, while `registered.site` or `registered.gmt` returns only that one.
+	 */
+	public function test_execute_dotted_field_projection(): void {
+		$ability = $this->get_registered();
+		self::assertNotNull( $ability );
+		$this->create_mocked_users();
+		wp_set_current_user( $this->user_ids['administrator'] );
+		$where = array( 'ids' => array( $this->user_ids['post_author'] ) );
+
+		$only_gmt = $ability->execute(
+			array(
+				'where'  => $where,
+				'fields' => array( 'registered.gmt' ),
+			)
+		)['items'][0];
+		self::assertArrayHasKey( 'registered', $only_gmt );
+		self::assertSame( array( 'gmt' ), array_keys( $only_gmt['registered'] ), 'A sub-field path returns only that sub-field.' );
+		self::assertMatchesRegularExpression( '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00$/', $only_gmt['registered']['gmt'] );
+
+		$only_site = $ability->execute(
+			array(
+				'where'  => $where,
+				'fields' => array( 'registered.site' ),
+			)
+		)['items'][0];
+		self::assertSame( array( 'site' => $only_site['registered']['site'] ), $only_site['registered'] );
+
+		$whole = $ability->execute(
+			array(
+				'where'  => $where,
+				'fields' => array( 'registered' ),
+			)
+		)['items'][0];
+		self::assertSame( array( 'site', 'gmt' ), array_keys( $whole['registered'] ), 'Requesting the whole field returns all of its sub-fields.' );
 	}
 
 	/**
