@@ -165,6 +165,18 @@ The entries below describe the current prototype state._
   category cannot be deleted (core's capability mapping denies the cap, and
   `wp_delete_term()` refuses the term). Rides the same
   `taxonomy_show_in_abilities` opt-in and content category as the query.
+- `show_in_rest` exposure flag on the three tier-core backports
+  (`core/content-query`, `core/settings-get`, `core/users-query`): their
+  `ability_meta()` now sets the flag explicitly under a `// Package:` marker,
+  so the abilities stay exposed over core's REST abilities routes on every
+  supported WordPress (6.9+) — core's own registration omits the flag and
+  relies on `meta.public` seeding it, which WordPress 7.1+ only does. The same
+  accommodation the AI plugin's synced copies carry with their `// Plugin:`
+  marker, made once in the package; the coreify round-trip gate tolerates
+  exactly this marked line and nothing more (a `PKG_META_ACCOMMODATIONS` map:
+  `--reverse` re-injects the flag into regenerated backports, forward drops it
+  behind `// Package:`-verified markers), and the trio tests pin
+  `meta.show_in_rest === true` with the high-level `public` meta unchanged.
 ### Removed
 
 - `wp/post-create` — the self-authored experimental write-ability prototype

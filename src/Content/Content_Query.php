@@ -213,23 +213,32 @@ final class Content_Query extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * The authored ability meta, exactly as core registers it.
+	 * The authored ability meta: core-verbatim, plus one marked package accommodation.
 	 *
 	 * Core also carries no `required_capabilities` on this ability: the permission callback
 	 * gates the request as a whole (an authenticated user, an exposed post type, and the
 	 * capabilities for the requested statuses), and execute_content_query() adds the
 	 * row-level read checks, so the static floor stays empty here too.
 	 *
+	 * The `show_in_rest` key below is the one addition (see its `// Package:` marker):
+	 * core's registration omits the flag and relies on `public` seeding it, which
+	 * WordPress 7.1+ only does, so the flag is set explicitly to stay exposed over the
+	 * REST abilities routes on every supported WordPress (6.9+).
+	 *
 	 * @return array<string, mixed> The ability meta.
 	 */
 	protected function ability_meta(): array {
 		return array(
-			'annotations' => array(
+			'annotations'  => array(
 				'readonly'    => true,
 				'destructive' => false,
 				'idempotent'  => true,
 			),
-			'public'      => true,
+			'public'       => true,
+			// Package: set explicitly so the ability is exposed over REST on all
+			// supported WordPress versions; core's registration relies on the
+			// `public` flag seeding `show_in_rest`, which WordPress 7.1+ only does.
+			'show_in_rest' => true,
 		);
 	}
 
