@@ -176,7 +176,7 @@ const PROFILES = array(
 			'get_input_object' => 'execute_users_query',
 			'parse_filter_int' => 'get_input_object',
 		),
-		'imports'       => array( 'WP_Error', 'WP_User', 'WP_User_Query' ),
+		'imports'       => array( 'DateTimeZone', 'WP_Error', 'WP_User', 'WP_User_Query' ),
 		'register_doc'  => 'Registers all user abilities.',
 		'register_note' => array(),
 		'category'      => 'user',
