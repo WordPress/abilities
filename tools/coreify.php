@@ -75,6 +75,42 @@ const REG_KEYS = array(
 );
 
 /**
+ * The one intentional, hand-marked meta divergence the package's tier-core
+ * backports carry vs core trunk: an explicit `'show_in_rest' => true` in
+ * ability_meta().
+ *
+ * Core's registration relies on `meta.public` seeding `show_in_rest`, a
+ * WordPress 7.1+ behavior; the backports serve WordPress 6.9+, and core's REST
+ * abilities routes (list + run) hard-require the flag. Core's own trio classes
+ * omit it (fine on 7.2+); the AI plugin's synced copies set it explicitly with
+ * a `// Plugin:` marker, and the package does the same once with `// Package:`.
+ *
+ * This map teaches the round-trip to tolerate exactly this marked meta line and
+ * nothing more, symmetrically:
+ *
+ * - forward() drops the mapped keys (plus their marker comments) when
+ *   unwrapping ability_meta() into core-shaped registration args, so the
+ *   regenerated core text stays semantically identical to the fixture.
+ * - reverse() re-injects them (key + marker comment lines, boolean true) when
+ *   emitting the package shape's ability_meta(), so a regenerated backport
+ *   keeps the flag and the shipped files keep passing the check gate.
+ *
+ * Global across PROFILES is deliberate: every tier-core backport has the same
+ * 6.9+ floor and the same need. reverse() injects only when the fixture's meta
+ * lacks the key, so a fixture that already carries it is carried through
+ * verbatim, never duplicated; forward() requires the exact marker lines below
+ * immediately before the dropped key, so the shipped files and this const
+ * change together — the marker is the audit trail, not documentation.
+ */
+const PKG_META_ACCOMMODATIONS = array(
+	'show_in_rest' => array(
+		'// Package: set explicitly so the ability is exposed over REST on all',
+		"// supported WordPress versions; core's registration relies on the",
+		'// `public` flag seeding `show_in_rest`, which WordPress 7.1+ only does.',
+	),
+);
+
+/**
  * Optional authoring methods: Abstract_Core_Ability defaults them, and an
  * ability overrides them only when core's register() entry point computes
  * state before registering (prepare()) or returns early (should_register()).
@@ -994,6 +1030,13 @@ function transform_forward( string $pkgText, string $absText ): string {
 		}
 		$vals[ $entry ] = return_expr( $tokens, $rec );
 	}
+
+	// The package's marked meta accommodations (PKG_META_ACCOMMODATIONS) leave the
+	// registration core-shaped: drop exactly the mapped keys (with their marker
+	// comments) from the meta entry.
+	if ( isset( $vals['meta'] ) ) {
+		$vals['meta'] = pkg_meta_drop_accommodations( $vals['meta'] );
+	}
 	$nameLit = "'" . $abname . "'";
 
 	if ( isset( $vals['required_capabilities'] ) && expr_is_empty_array( $vals['required_capabilities'] ) ) {
@@ -1138,6 +1181,223 @@ function transform_forward( string $pkgText, string $absText ): string {
 		. 'final class ' . $coreClass . " {\n\n";
 
 	return $header . $body . "}\n";
+}
+
+/* ---------------------------------------------------------------------
+ * Package meta accommodations (the one marked divergence, PKG_META_ACCOMMODATIONS)
+ * ------------------------------------------------------------------- */
+
+/**
+ * Scan a registration-shaped array( ... ) expression: the outer group bounds
+ * and each top-level element as [first meaningful token, last meaningful
+ * token] with its separator comma index (null when there is none, i.e. the
+ * final element before the array close).
+ *
+ * The scan is comment-tolerant on purpose: the drop side must reach elements
+ * preceded by marker comment lines. Callers enforce their own strictness.
+ *
+ * @param array $tokens Token list of a '<?php ' prefixed meta expression.
+ * @return array{open:int,close:int,elements:list<array{first:int,end:int,comma:int|null}>}|null
+ *         Null when the expression is not an array( ... ) with `=>` elements.
+ */
+function pkg_meta_scan_top_level( array $tokens ): ?array {
+	$n = count( $tokens );
+	$open = null;
+	for ( $i = 0; $i < $n; $i++ ) {
+		if ( T_ARRAY !== $tokens[ $i ][0] ) {
+			continue;
+		}
+		$paren = next_meaningful_token( $tokens, $i + 1 );
+		if ( null !== $paren && 40 === $tokens[ $paren ][0] ) {
+			$open = $paren;
+			break;
+		}
+	}
+	if ( null === $open ) {
+		return null;
+	}
+	$close = match_group( $tokens, $open );
+	$elements = array();
+	$i = $open + 1;
+	while ( $i < $close ) {
+		$first = next_meaningful_token( $tokens, $i, $close - 1 );
+		if ( null === $first ) {
+			break;
+		}
+		$arrow = next_meaningful_token( $tokens, $first + 1, $close - 1 );
+		if ( null === $arrow || T_DOUBLE_ARROW !== $tokens[ $arrow ][0] ) {
+			return null;
+		}
+		$depth = 0;
+		$comma = null;
+		for ( $j = $arrow + 1; $j < $close; $j++ ) {
+			if ( is_skipped( $tokens[ $j ] ) ) {
+				continue;
+			}
+			if ( 0 === $depth && 44 === $tokens[ $j ][0] ) {
+				$comma = $j;
+				break;
+			}
+			$depth += struct_delta( $tokens[ $j ] );
+		}
+		$end = prev_meaningful_token( $tokens, $arrow + 1, ( null === $comma ? $close : $comma ) - 1 );
+		if ( null === $end ) {
+			return null;
+		}
+		$elements[] = array( 'first' => $first, 'end' => $end, 'comma' => $comma );
+		$i = ( null === $comma ? $close : $comma ) + 1;
+	}
+	return array( 'open' => $open, 'close' => $close, 'elements' => $elements );
+}
+
+/**
+ * The reverse side of the accommodation: inject the {@see PKG_META_ACCOMMODATIONS}
+ * keys (boolean true, with their marker comment lines) into an emitted
+ * ability_meta() return statement — `return array( ... );` — so regenerated
+ * package files keep the accommodation the shipped files hand-author (the mB
+ * side of the gate).
+ *
+ * Keys already present in the meta are carried through untouched (never
+ * duplicated), so injection is a no-op for any future fixture that already
+ * ships the flag itself. Existing elements are re-emitted with `=>` arrows
+ * padded to the widest key among existing and injected elements (WPCS
+ * alignment); values keep their original text.
+ *
+ * @param string $metaReturn The ability_meta() return statement text.
+ */
+function pkg_meta_inject_accommodations( string $metaReturn ): string {
+	$tokens = tokenize_source( '<?php ' . $metaReturn, false );
+	$scan = pkg_meta_scan_top_level( $tokens );
+	if ( null === $scan || array() === $scan['elements'] ) {
+		fail( 'pkg-meta inject: ability_meta() meta is not a non-empty array( ... ) of keyed elements' );
+	}
+	$present = array();
+	foreach ( $scan['elements'] as $e ) {
+		if ( T_CONSTANT_ENCAPSED_STRING !== $tokens[ $e['first'] ][0] ) {
+			fail( 'pkg-meta inject: unexpected non-string-keyed meta element' );
+		}
+		$present[] = unquote( $tokens[ $e['first'] ][1] );
+	}
+	$pending = array();
+	foreach ( PKG_META_ACCOMMODATIONS as $key => $markers ) {
+		if ( ! in_array( $key, $present, true ) ) {
+			$pending[] = $key;
+		}
+	}
+	if ( array() === $pending ) {
+		return $metaReturn; // already carries every accommodation
+	}
+
+	/* element line indentation, from the line break ahead of the first element */
+	$first0 = $scan['elements'][0]['first'];
+	$wstok = $first0 > 0 ? $tokens[ $first0 - 1 ] : null;
+	if ( null === $wstok || T_WHITESPACE !== $wstok[0] || false === strpos( $wstok[1], "\n" ) ) {
+		fail( 'pkg-meta inject: cannot derive the meta element indentation' );
+	}
+	$indent = substr( $wstok[1], strrpos( $wstok[1], "\n" ) + 1 );
+
+	$maxlen = 0;
+	foreach ( $scan['elements'] as $e ) {
+		$maxlen = max( $maxlen, strlen( $tokens[ $e['first'] ][1] ) );
+	}
+	foreach ( $pending as $key ) {
+		$maxlen = max( $maxlen, strlen( $key ) + 2 );
+	}
+
+	$lines = array();
+	foreach ( $scan['elements'] as $e ) {
+		$arrow = next_meaningful_token( $tokens, $e['first'] + 1, $e['end'] );
+		$value = ltrim( span_text( $tokens, $arrow + 1, $e['end'] ) );
+		$pad = str_repeat( ' ', $maxlen - strlen( $tokens[ $e['first'] ][1] ) + 1 );
+		$lines[] = $indent . $tokens[ $e['first'] ][1] . $pad . '=> ' . $value . ',';
+	}
+	foreach ( $pending as $key ) {
+		foreach ( PKG_META_ACCOMMODATIONS[ $key ] as $marker ) {
+			$lines[] = $indent . $marker;
+		}
+		$pad = str_repeat( ' ', $maxlen - ( strlen( $key ) + 2 ) + 1 );
+		$lines[] = $indent . "'" . $key . "'" . $pad . '=> true,';
+	}
+
+	$last = $scan['elements'][ count( $scan['elements'] ) - 1 ];
+	$tail = span_text( $tokens, ( $last['comma'] ?? $last['end'] ) + 1, count( $tokens ) - 1 );
+	return span_text( $tokens, 1, $scan['open'] ) . "\n" . implode( "\n", $lines ) . $tail;
+}
+
+/**
+ * The forward side of the accommodation: drop the {@see PKG_META_ACCOMMODATIONS}
+ * keys (plus their exact marker comment lines) from a lifted ability_meta()
+ * return expression, so the reconstructed core-shaped registration stays
+ * semantically identical to the fixture (the mA side of the gate). No wildcard
+ * dropping: only exactly the mapped keys are removed, and nothing else.
+ *
+ * Strict by design: a mapped key found in the meta MUST carry the const's
+ * marker comment lines immediately before it. An unmarked or reworded
+ * accommodation fails loudly instead of degrading silently, so the shipped
+ * files and the const change together.
+ *
+ * @param string $metaExpr The ability_meta() return expression text.
+ */
+function pkg_meta_drop_accommodations( string $metaExpr ): string {
+	$tokens = tokenize_source( '<?php ' . $metaExpr, false );
+	$scan = pkg_meta_scan_top_level( $tokens );
+	if ( null === $scan ) {
+		return $metaExpr; // not a parseable array( ... ) of keyed elements; nothing to drop
+	}
+	$drops = array();
+	$seen = array();
+	foreach ( $scan['elements'] as $e ) {
+		$first = $e['first'];
+		if ( T_CONSTANT_ENCAPSED_STRING !== $tokens[ $first ][0] ) {
+			continue; // not a keyed element; the accommodation keys are plain strings
+		}
+		$key = unquote( $tokens[ $first ][1] );
+		if ( ! isset( PKG_META_ACCOMMODATIONS[ $key ] ) ) {
+			continue;
+		}
+		if ( isset( $seen[ $key ] ) ) {
+			fail( "pkg-meta drop: duplicate accommodated key '$key' in ability_meta()" );
+		}
+		$seen[ $key ] = true;
+		/* the marker comment block immediately before the key */
+		$collected = array();
+		for ( $j = $first - 1; $j > $scan['open']; $j-- ) {
+			$id = $tokens[ $j ][0];
+			if ( T_WHITESPACE === $id ) {
+				continue;
+			}
+			if ( T_COMMENT !== $id && T_DOC_COMMENT !== $id ) {
+				break;
+			}
+			$collected[] = array( $j, trim( $tokens[ $j ][1] ) );
+		}
+		$got = array_reverse( array_column( $collected, 1 ) );
+		if ( $got !== PKG_META_ACCOMMODATIONS[ $key ] ) {
+			fail( "pkg-meta drop: ability_meta() carries the accommodated key '$key' without PKG_META_ACCOMMODATIONS's exact marker comment lines (expected: " . implode( ' ', PKG_META_ACCOMMODATIONS[ $key ] ) . ' ; got: ' . ( array() === $got ? '(none)' : implode( ' ', $got ) ) . '); update the const and the source marker together.' );
+		}
+		$dropStart = $collected[ count( $collected ) - 1 ][0];
+		if ( T_WHITESPACE === $tokens[ $dropStart - 1 ][0] && false !== strpos( $tokens[ $dropStart - 1 ][1], "\n" ) ) {
+			$dropStart--; // swallow the line break separating the dropped block from the element above
+		}
+		$drops[] = array( 'start' => $dropStart, 'end' => $e['comma'] ?? $e['end'] );
+	}
+	if ( array() === $drops ) {
+		return $metaExpr;
+	}
+	$out = '';
+	for ( $j = 1, $n = count( $tokens ); $j < $n; $j++ ) { // token 0 is the '<?php ' prefix
+		$drop = false;
+		foreach ( $drops as $d ) {
+			if ( $j >= $d['start'] && $j <= $d['end'] ) {
+				$drop = true;
+				break;
+			}
+		}
+		if ( ! $drop ) {
+			$out .= $tokens[ $j ][1];
+		}
+	}
+	return $out;
 }
 
 /* ---------------------------------------------------------------------
@@ -1378,6 +1638,11 @@ function transform_reverse( string $coreText ): string {
 		$types['make_permission_callback'] = '?callable';
 	}
 	$authors['ability_meta'] = $mkret( 'meta' );
+
+	// The package's marked meta accommodations (PKG_META_ACCOMMODATIONS) keep regenerated
+	// backports identical to the shipped files: re-inject the mapped keys (with their
+	// marker comment lines) when the fixture's meta lacks them.
+	$authors['ability_meta'] = pkg_meta_inject_accommodations( $authors['ability_meta'] );
 
 	$rc = 'return array();';
 	if ( isset( $entries['required_capabilities'] ) ) {

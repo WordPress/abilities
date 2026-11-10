@@ -261,6 +261,12 @@ final class UsersQueryTest extends TestCase {
 			$meta['annotations'] ?? null
 		);
 		self::assertTrue( (bool) ( $meta['public'] ?? false ) );
+		self::assertSame(
+			true,
+			$meta['show_in_rest'] ?? null,
+			'The ability stays exposed over the REST abilities routes on every supported WordPress: core seeds show_in_rest from `public` on 7.1+ only, so the package copy ships the flag explicitly (the `// Package:` meta accommodation).'
+		);
+		self::assertSame( true, $ability->get_meta_item( 'public', null ), 'The high-level public meta stays true.' );
 
 		if ( empty( $meta['source'] ) ) {
 			// Trunk env: core provides the name; the package copy must have skipped.
