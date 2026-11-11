@@ -5,10 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0] - 2026-11-10
+
+First tagged release. Includes everything listed under [Unreleased] —
+the initial snapshot of the prototype.
+
+### Changed
+
+- Media and terms abilities set `meta.mcp.public` directly instead of
+  falling back to `meta.public`.
+
 ## [Unreleased]
 
-_Nothing is released yet — the package has no published versions or tags.
-The entries below describe the current prototype state._
+### Added
 
 ### Added
 

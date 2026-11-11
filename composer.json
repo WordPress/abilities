@@ -1,5 +1,6 @@
 {
     "name": "wordpress/abilities",
+    "version": "0.1.0",
     "type": "library",
     "description": "Canonical WordPress Abilities, consumable by plugins via the Abilities API.",
     "license": "GPL-2.0-or-later",
