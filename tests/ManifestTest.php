@@ -147,7 +147,7 @@ final class ManifestTest extends TestCase {
 	 */
 	public function test_version_matches_newest_git_tag_or_seed(): void {
 		$raw     = shell_exec( 'git describe --tags --abbrev=0 2>/dev/null' );
-		$tag     = is_string( $raw ) ? trim( $raw ) : '';
+		$tag     = is_string( $raw ) ? (string) preg_replace( '/^v(?=\d)/', '', trim( $raw ) ) : '';
 		$message = 'composer.json has no version field; Manifest::VERSION is the source of truth.';
 		if ( '' === $tag ) {
 			self::assertSame( '0.1.0', Manifest::VERSION, 'No git tags exist: ' . $message );

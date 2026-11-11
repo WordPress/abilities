@@ -513,12 +513,15 @@ final class SettingsUpdateTest extends TestCase {
 				)
 			);
 
-			if ( method_exists( 'WP_Ability', 'coerce_input' ) ) {
+			if ( method_exists( 'WP_Ability', 'coerce_input' ) || method_exists( 'WP_Ability', 'sanitize_input' ) ) {
 				// The coercion layer refuses the input before the execute callback
 				// runs: the observable is ability_invalid_input (no status data), the
 				// same schema-level shape as the other input-rejection rows. A plugin
 				// refusal would carry the params/status data the mapping row below
-				// pins, and the plugin never returns this code.
+				// pins, and the plugin never returns this code. WP trunk renamed
+				// coerce_input to sanitize_input in r65044 @since 7.2.0, refusing
+				// with ability_invalid_input and no error data before execute, so
+				// sanitize_input is the shipped coercion API from 7.2.0 on.
 				$this->assert_error_response( 'ability_invalid_input', $result, null, 'A value unique only before coercion should be refused.' );
 				self::assertNull( $result->get_error_data(), 'The framework refusal should carry no error data: the plugin callback never ran.' );
 			} else {

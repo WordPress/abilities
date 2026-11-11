@@ -310,11 +310,12 @@ function verify_manifest_classes(): array {
  * Version sync (mirrors
  * ManifestTest::test_version_matches_newest_git_tag_or_seed).
  *
- * composer.json intentionally carries no version field (WP0 finding):
- * Manifest::VERSION is the single source of truth and must match the
- * newest git tag when any exist, else the 0.1.0 seed. Should a version
- * field ever be (re)introduced in composer.json, it must match
- * Manifest::VERSION so drift cannot ship silently.
+ * composer.json deliberately carries 'version': '0.1.0', added in the
+ * v0.1.0 release so composer requirements can resolve, matching
+ * Manifest::VERSION. Manifest::VERSION remains the single source of truth
+ * and must match the newest git tag when any exist, else the 0.1.0 seed;
+ * the composer.json version field must keep matching Manifest::VERSION so
+ * drift cannot ship silently.
  *
  * @return list<string> Violations.
  */
@@ -354,7 +355,12 @@ function verify_manifest_newest_git_tag(): string {
 	$cmd = 'git -C ' . escapeshellarg( dirname( __DIR__ ) ) . ' describe --tags --abbrev=0 2>/dev/null';
 	$raw = shell_exec( $cmd );
 
-	return is_string( $raw ) ? trim( $raw ) : '';
+	if ( ! is_string( $raw ) ) {
+		return '';
+	}
+
+	// Tags carry a v prefix (e.g. 'v0.1.0') while versions are bare semver.
+	return (string) preg_replace( '/^v(?=\d)/', '', trim( $raw ) );
 }
 
 /*
