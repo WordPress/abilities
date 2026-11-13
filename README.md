@@ -151,24 +151,7 @@ Full rules, the promotion path, and the rename protocol are in
 | `wp/term-update` | experimental | content | Port of the term update ability from [WordPress/ai PR #1103](https://github.com/WordPress/ai/pull/1103) (`core_since: null` — flips to tier `core` when it lands in WordPress core). Updates a term by `id` with the same fields, which keep their values when left out; `taxonomy` is an optional guard, and a term outside it is denied like a missing one. Returns the updated term in the `wp/terms-query` shape; `fields` picks the subset. Requires `edit_term` for the term. |
 | `wp/term-delete` | experimental | content | Port of the term delete ability from [WordPress/ai PR #1103](https://github.com/WordPress/ai/pull/1103) (`core_since: null` — flips to tier `core` when it lands in WordPress core). Deletes a term by `id`; terms cannot be trashed, so **`force` must be true** — a non-forced call answers `terms_trash_not_supported` (501). Returns `{ deleted, previous }`, the deleted term in the `wp/terms-query` shape; `fields` picks the subset. Requires `delete_term` for the term; the default category is not deleted (core's capability mapping denies it, and `wp_delete_term()` refuses it), and the `taxonomy` input is an optional guard like on update. |
 
-## Roadmap (not yet)
 
-Planned, **not** available in the current package: the MCP adapter consuming
-this package via `Registrar::register_all()`; further write abilities beyond
-the content trio; the WordPress AI plugin migration; Packagist publishing.
-
-Settings writes are no longer roadmanted either: `wp/settings-update` ships
-(extended from the `core/settings-get` backport's shared exposed-settings
-snapshot). Media read is no longer roadmanted — `wp/media-query` ships in this
-package (the first experimental-tier `wp/` ability). Media writes are no longer
-roadmanted either: `wp/media-upload`, `wp/media-update`, and `wp/media-delete`
-ship on top of the same `media` category and field projection. Terms read is no
-longer roadmanted either: `wp/terms-query` ships (the taxonomy opt-in flag is
-the `taxonomy_show_in_abilities` support feature, polyfilled). Term writes are
-no longer roadmanted either: `wp/term-create`, `wp/term-update`, and
-`wp/term-delete` ship on top of the same exposed-taxonomy opt-in and field
-projection. Further media, terms, or write abilities incubate under `wp/` the
-same way before ever carrying a `core/` proposal.
 
 ## Development
 
