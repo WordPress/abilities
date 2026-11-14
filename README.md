@@ -151,8 +151,6 @@ Full rules, the promotion path, and the rename protocol are in
 | `wp/term-update` | experimental | content | Port of the term update ability from [WordPress/ai PR #1103](https://github.com/WordPress/ai/pull/1103) (`core_since: null` — flips to tier `core` when it lands in WordPress core). Updates a term by `id` with the same fields, which keep their values when left out; `taxonomy` is an optional guard, and a term outside it is denied like a missing one. Returns the updated term in the `wp/terms-query` shape; `fields` picks the subset. Requires `edit_term` for the term. |
 | `wp/term-delete` | experimental | content | Port of the term delete ability from [WordPress/ai PR #1103](https://github.com/WordPress/ai/pull/1103) (`core_since: null` — flips to tier `core` when it lands in WordPress core). Deletes a term by `id`; terms cannot be trashed, so **`force` must be true** — a non-forced call answers `terms_trash_not_supported` (501). Returns `{ deleted, previous }`, the deleted term in the `wp/terms-query` shape; `fields` picks the subset. Requires `delete_term` for the term; the default category is not deleted (core's capability mapping denies it, and `wp_delete_term()` refuses it), and the `taxonomy` input is an optional guard like on update. |
 
-
-
 ## Development
 
 ```bash
@@ -164,6 +162,10 @@ composer run verify:manifest # tier/prefix and manifest consistency rules
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+
+## Maintainers
+
+Maintainers for this repo are [Greg Ziółkowski (@gziolo)](https://github.com/gziolo), [Jeffrey Paul (@jeffpaul)](https://github.com/jeffpaul), [Jorge Costa (@jorgefilipecosta)](https://github.com/jorgefilipecosta), and [Nik McLaughlin (@nikmclaughlin)](https://github.com/nikmclaughlin); all can be reached using the [@WordPress/abilities-maintainers](https://github.com/orgs/WordPress/teams/abilities-maintainers) team.
 
 ## License
 
