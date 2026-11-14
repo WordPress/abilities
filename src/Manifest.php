@@ -18,7 +18,7 @@ namespace WordPress\Abilities;
  */
 final class Manifest {
 
-	/** Package version; must stay in sync with composer.json. */
+	/** Package version; must match the newest git tag. */
 	public const VERSION = '0.1.0';
 
 	/** Experimental tier: `wp/` prefix, no promises, iterating. */
