@@ -133,6 +133,10 @@ Full rules, the promotion path, and the rename protocol are in
 
 ### Current abilities
 
+The target shape of every ability — its name, input and output schemas, and
+examples — is in [CORE-SHAPE.md](CORE-SHAPE.md). Where the table below or the
+code differs from it, the code is being updated to match.
+
 | Name | Tier | Category | Notes |
 |---|---|---|---|
 | `core/content-query` | core | content | Backport of the readonly content query ability landed in WordPress core 7.2 (`core_since: 7.2`). On 7.2+ core provides it and the Registrar skips it; on 6.9–7.1 the package serves it under the same name. Requires the `show_in_abilities` support feature (polyfilled where core lacks it). |

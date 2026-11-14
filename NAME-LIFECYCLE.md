@@ -21,7 +21,8 @@ shipped):
 
 1. **Incubate:** `wp/post-update` iterates and gets tested through the MCP
    adapter against real tasks. Names and schema may still change freely.
-2. **Ready:** file the core proposal (a trac ticket or GitHub issue).
+2. **Ready:** file the core proposal (a trac ticket or GitHub issue). The
+   target name and schema of each ability are in [CORE-SHAPE.md](CORE-SHAPE.md).
 3. **Same release:** rename to `core/post-update` — tier becomes `stable`,
    the manifest entry gains its `proposal` URL, and the schema is frozen
    (backwards compatible from this moment).
