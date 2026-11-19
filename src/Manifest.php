@@ -345,6 +345,28 @@ final class Manifest {
 				'renamed_from'   => null,
 				'proposal'       => 'https://github.com/WordPress/ai/pull/1103',
 			),
+			'wp/plugins-query'    => array(
+				'name'           => 'wp/plugins-query',
+				'class'          => Site\Plugins_Query::class,
+				'category'       => 'site',
+				'tier'           => self::TIER_EXPERIMENTAL,
+				'min_wp_version' => '6.9',
+				'core_since'     => null,
+				'requires'       => array(),
+				'renamed_from'   => null,
+				'proposal'       => 'https://github.com/WordPress/abilities/issues/17',
+			),
+			'wp/themes-query'     => array(
+				'name'           => 'wp/themes-query',
+				'class'          => Site\Themes_Query::class,
+				'category'       => 'site',
+				'tier'           => self::TIER_EXPERIMENTAL,
+				'min_wp_version' => '6.9',
+				'core_since'     => null,
+				'requires'       => array(),
+				'renamed_from'   => null,
+				'proposal'       => 'https://github.com/WordPress/abilities/issues/17',
+			),
 		);
 	}
 

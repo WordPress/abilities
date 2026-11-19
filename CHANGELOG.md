@@ -19,6 +19,8 @@ the initial snapshot of the prototype.
 
 ### Added
 
+- Add experimental read-only plugin and theme inventory queries for the current site.
+
 ### Added
 
 - Repository scaffold and tooling: Composer contract for `wordpress/abilities`
