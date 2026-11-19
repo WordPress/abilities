@@ -3,6 +3,17 @@
     "type": "library",
     "description": "Canonical WordPress Abilities, consumable by plugins via the Abilities API.",
     "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "WordPress AI Team",
+            "homepage": "https://make.wordpress.org/ai/"
+        }
+    ],
+    "homepage": "https://github.com/WordPress/abilities",
+    "support": {
+        "issues": "https://github.com/WordPress/abilities/issues",
+        "source": "https://github.com/WordPress/abilities"
+    },  
     "require": {
         "php": ">=7.4"
     },
