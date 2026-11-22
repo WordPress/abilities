@@ -42,7 +42,18 @@ final class Manifest {
 	 */
 	public static function all(): array {
 		return array(
-			'core/content-query'  => array(
+			'wp/navigation-menus-query' => array(
+				'name'           => 'wp/navigation-menus-query',
+				'class'          => Navigation_Menus\Navigation_Menus_Query::class,
+				'category'       => 'site-editing',
+				'tier'           => self::TIER_EXPERIMENTAL,
+				'min_wp_version' => '6.9',
+				'core_since'     => null,
+				'requires'       => array(),
+				'renamed_from'   => null,
+				'proposal'       => 'https://github.com/WordPress/ai/pull/858',
+			),
+			'core/content-query'        => array(
 				'name'           => 'core/content-query',
 				/*
 				 * `::class` resolves to the FQCN without loading the class,
@@ -60,7 +71,7 @@ final class Manifest {
 				// the landed core work (wordpress-develop PR 12195) before release.
 				'proposal'       => 'https://github.com/WordPress/wordpress-develop/pull/12195',
 			),
-			'core/settings-get'   => array(
+			'core/settings-get'         => array(
 				'name'           => 'core/settings-get',
 				'class'          => Settings\Settings_Get::class,
 				'category'       => 'site',
@@ -72,7 +83,7 @@ final class Manifest {
 				// Landed in trunk as b6512b1e8c (Trac #64605), developed in this PR.
 				'proposal'       => 'https://github.com/WordPress/wordpress-develop/pull/12141',
 			),
-			'core/users-query'    => array(
+			'core/users-query'          => array(
 				'name'           => 'core/users-query',
 				'class'          => Users\Users_Query::class,
 				'category'       => 'user',
@@ -93,7 +104,7 @@ final class Manifest {
 			 * filing). The entries flip to core with `core_since` set once
 			 * the abilities land in an actual WordPress release.
 			 */
-			'core/content-create' => array(
+			'core/content-create'       => array(
 				'name'           => 'core/content-create',
 				'class'          => Content\Content_Create::class,
 				'category'       => 'content',
@@ -104,7 +115,7 @@ final class Manifest {
 				'renamed_from'   => null,
 				'proposal'       => 'https://github.com/WordPress/ai/pull/1025',
 			),
-			'core/content-update' => array(
+			'core/content-update'       => array(
 				'name'           => 'core/content-update',
 				'class'          => Content\Content_Update::class,
 				'category'       => 'content',
@@ -115,7 +126,7 @@ final class Manifest {
 				'renamed_from'   => null,
 				'proposal'       => 'https://github.com/WordPress/ai/pull/1025',
 			),
-			'core/content-delete' => array(
+			'core/content-delete'       => array(
 				'name'           => 'core/content-delete',
 				'class'          => Content\Content_Delete::class,
 				'category'       => 'content',
@@ -137,7 +148,7 @@ final class Manifest {
 			 * the package-authored `media` ability category (core trunk has no
 			 * media category; see Categories).
 			 */
-			'wp/media-query'      => array(
+			'wp/media-query'            => array(
 				'name'           => 'wp/media-query',
 				'class'          => Media\Media_Query::class,
 				'category'       => 'media',
@@ -161,7 +172,7 @@ final class Manifest {
 			 * They use the package-authored `media` ability category (see
 			 * Categories).
 			 */
-			'wp/media-upload'     => array(
+			'wp/media-upload'           => array(
 				'name'           => 'wp/media-upload',
 				'class'          => Media\Media_Upload::class,
 				'category'       => 'media',
@@ -172,7 +183,7 @@ final class Manifest {
 				'renamed_from'   => null,
 				'proposal'       => 'https://github.com/WordPress/ai/pull/1104',
 			),
-			'wp/media-update'     => array(
+			'wp/media-update'           => array(
 				'name'           => 'wp/media-update',
 				'class'          => Media\Media_Update::class,
 				'category'       => 'media',
@@ -183,7 +194,7 @@ final class Manifest {
 				'renamed_from'   => null,
 				'proposal'       => 'https://github.com/WordPress/ai/pull/1104',
 			),
-			'wp/media-delete'     => array(
+			'wp/media-delete'           => array(
 				'name'           => 'wp/media-delete',
 				'class'          => Media\Media_Delete::class,
 				'category'       => 'media',
@@ -208,7 +219,7 @@ final class Manifest {
 			 * core (`core_since` stays null and flips when core lands it), so its
 			 * name and schema carry no promises yet (NAME-LIFECYCLE.md).
 			 */
-			'wp/settings-update'  => array(
+			'wp/settings-update'        => array(
 				'name'           => 'wp/settings-update',
 				'class'          => Settings\Settings_Update::class,
 				'category'       => 'site',
@@ -233,7 +244,7 @@ final class Manifest {
 			 * core (`core_since` stays null and flips when core lands them), so
 			 * their names and schemas carry no promises yet (NAME-LIFECYCLE.md).
 			 */
-			'wp/user-create'      => array(
+			'wp/user-create'            => array(
 				'name'           => 'wp/user-create',
 				'class'          => Users\User_Create::class,
 				'category'       => 'user',
@@ -244,7 +255,7 @@ final class Manifest {
 				'renamed_from'   => null,
 				'proposal'       => 'https://github.com/WordPress/ai/pull/1105',
 			),
-			'wp/user-update'      => array(
+			'wp/user-update'            => array(
 				'name'           => 'wp/user-update',
 				'class'          => Users\User_Update::class,
 				'category'       => 'user',
@@ -255,7 +266,7 @@ final class Manifest {
 				'renamed_from'   => null,
 				'proposal'       => 'https://github.com/WordPress/ai/pull/1105',
 			),
-			'wp/user-delete'      => array(
+			'wp/user-delete'            => array(
 				'name'           => 'wp/user-delete',
 				'class'          => Users\User_Delete::class,
 				'category'       => 'user',
@@ -278,7 +289,7 @@ final class Manifest {
 			 * pre-7.2 hosts), and the taxonomy opt-in `show_in_abilities` is
 			 * native on 7.2+ and polyfilled on 6.9-7.1.
 			 */
-			'wp/terms-query'      => array(
+			'wp/terms-query'            => array(
 				'name'           => 'wp/terms-query',
 				'class'          => Terms\Terms_Query::class,
 				'category'       => 'content',
@@ -312,7 +323,7 @@ final class Manifest {
 			 * it on pre-7.2 hosts), and the taxonomy opt-in they ride is the
 			 * `taxonomy_show_in_abilities` support feature, as for the query.
 			 */
-			'wp/term-create'      => array(
+			'wp/term-create'            => array(
 				'name'           => 'wp/term-create',
 				'class'          => Terms\Term_Create::class,
 				'category'       => 'content',
@@ -323,7 +334,7 @@ final class Manifest {
 				'renamed_from'   => null,
 				'proposal'       => 'https://github.com/WordPress/ai/pull/1103',
 			),
-			'wp/term-update'      => array(
+			'wp/term-update'            => array(
 				'name'           => 'wp/term-update',
 				'class'          => Terms\Term_Update::class,
 				'category'       => 'content',
@@ -334,7 +345,7 @@ final class Manifest {
 				'renamed_from'   => null,
 				'proposal'       => 'https://github.com/WordPress/ai/pull/1103',
 			),
-			'wp/term-delete'      => array(
+			'wp/term-delete'            => array(
 				'name'           => 'wp/term-delete',
 				'class'          => Terms\Term_Delete::class,
 				'category'       => 'content',

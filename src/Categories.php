@@ -19,10 +19,9 @@ namespace WordPress\Abilities;
  * Definitions mirror core's default ability category registration
  * (wordpress-develop trunk, wp_register_core_ability_categories()) verbatim,
  * including being passed through the `default` text domain at declaration
- * time, so the package's declarations are indistinguishable from core's own
- * on 7.2+ hosts — with one exception: the `media` category is package-authored
- * (core trunk registers no media category; nothing to copy verbatim from
- * trunk). This is not a general category registry: keep an entry in
+ * time, so the package's declarations match core's own on 7.2+ hosts.
+ * The `media` and `site-editing` categories are package-authored because
+ * core does not register them. This is not a general category registry: keep an entry in
  * this table only for as long as the manifest declares a category that
  * needs it, and keep the strings in sync when a trunk refresh changes them.
  *
@@ -40,15 +39,19 @@ final class Categories {
 	 * @var array<string, array{label: string, description: string}>
 	 */
 	private const DEFINITIONS = array(
-		'site'    => array(
+		'site-editing' => array(
+			'label'       => 'Site Editing',
+			'description' => 'Abilities that retrieve or modify site structure and presentation.',
+		),
+		'site'         => array(
 			'label'       => 'Site',
 			'description' => 'Abilities that retrieve or modify site information and settings.',
 		),
-		'user'    => array(
+		'user'         => array(
 			'label'       => 'User',
 			'description' => 'Abilities that retrieve or modify user information and settings.',
 		),
-		'content' => array(
+		'content'      => array(
 			'label'       => 'Content',
 			'description' => 'Abilities that retrieve or manage posts and other content.',
 		),
@@ -60,7 +63,7 @@ final class Categories {
 		 * with the same trunk refresh cadence as the entries above. If core lands
 		 * a media category, replace this definition with core's verbatim strings.
 		 */
-		'media'   => array(
+		'media'        => array(
 			'label'       => 'Media',
 			'description' => 'Abilities that retrieve or manage media items and attachments.',
 		),
