@@ -345,6 +345,28 @@ final class Manifest {
 				'renamed_from'   => null,
 				'proposal'       => 'https://github.com/WordPress/ai/pull/1103',
 			),
+			/*
+			 * The templates query below is a port of WordPress/ai PR #1309,
+			 * which closes WordPress/ai issue #1303.
+			 *
+			 * Tier: experimental, incubating under the `wp/` prefix. The proposal
+			 * below is the PR's paper trail, but the ability has NOT landed in
+			 * core (`core_since` stays null and flips when core lands it), so its
+			 * name and schema carry no promises yet (NAME-LIFECYCLE.md). Its
+			 * `site` category is core-registered on every supported host, and it
+			 * needs no support feature beyond the Abilities API.
+			 */
+			'wp/templates-query'  => array(
+				'name'           => 'wp/templates-query',
+				'class'          => Templates\Templates_Query::class,
+				'category'       => 'site',
+				'tier'           => self::TIER_EXPERIMENTAL,
+				'min_wp_version' => '6.9',
+				'core_since'     => null,
+				'requires'       => array(),
+				'renamed_from'   => null,
+				'proposal'       => 'https://github.com/WordPress/ai/pull/1309',
+			),
 		);
 	}
 
