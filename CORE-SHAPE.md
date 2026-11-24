@@ -832,8 +832,9 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
 
 ### `core/settings-update`
 
-- A `null` value resets a setting to its default, and stores the default so requests that do not register the setting read it too. A setting without a default has its stored value deleted, which is why the ability is `destructive`.
-- The ability is not `idempotent`: repeating a `null` value can fail. For a setting without a default, the second call finds no stored value left to delete.
+- A `null` value resets a setting to its default, and stores the default so requests that do not register the setting read it too. A setting without a default has its stored value deleted, which is why the ability is `destructive`, and a `null` value for one without a stored value changes nothing.
+- A `null` value for a setting without a default is refused with `settings_invalid_stored_value` while its stored value does not match its schema: `core/settings-get` leaves that value out, so the caller cannot see what would be deleted. A setting with a default always takes its default.
+- The ability is not `idempotent`, although repeating a call has no further effect: an ability that is both `destructive` and `idempotent` runs with the `DELETE` method, and this ability updates settings.
 - A value that matches the schema but that the setting cannot use is refused with `settings_invalid_value`, and nothing is saved. This covers an unknown `timezone`, a `language` that is not installed, an unknown `default_post_format`, a page setting that is not 0 or the ID of a page, and a `default_category` that is not the ID of a category. The error data maps each refused setting to its message under `params`.
 - The site address (`url`) and the administration email address (`email`) are read-only: `core/settings-get` returns them, but they are left out of the input, under whatever name a plugin exposes them. Settings > General only changes the administration email address after the new address confirms it.
 
@@ -861,16 +862,16 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
 { "default_comment_status": "closed", "default_ping_status": "closed" }
 ```
 
-**Example 3:** deleting a setting whose stored value no longer matches its schema
+**Example 3:** deleting a setting without a default whose stored value no longer matches its schema
 
 ```jsonc
 // Input
-{ "data": { "posts_per_page": null } }
+{ "data": { "start_of_week": null } }
 
 // Error
 {
   "code": "settings_invalid_stored_value",
-  "message": "The posts_per_page property has an invalid stored value, and cannot be updated to null.",
+  "message": "The start_of_week property has an invalid stored value, and cannot be updated to null.",
   "data": { "status": 500 }
 }
 ```
