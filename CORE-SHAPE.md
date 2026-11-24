@@ -9,7 +9,7 @@ This document is the source of truth for the shape of the core abilities: their 
 | [`core/content-update`](#corecontent-update) | Proposed | content | `false` | `false` | `true` | `POST` |
 | [`core/content-delete`](#corecontent-delete) | Proposed | content | `false` | `true` | `true` | `DELETE` |
 | [`core/settings-get`](#coresettings-get) | Landed, [`b6512b1e8c`](https://github.com/WordPress/wordpress-develop/commit/b6512b1e8ca) | site | `true` | `false` | `true` | `GET` |
-| [`core/settings-update`](#coresettings-update) | Proposed | site | `false` | `false` | `true` | `POST` |
+| [`core/settings-update`](#coresettings-update) | Proposed | site | `false` | `true` | `false` | `POST` |
 | [`core/users-query`](#coreusers-query) | Landed, [`39981fd0fe`](https://github.com/WordPress/wordpress-develop/commit/39981fd0fef) | user | `true` | `false` | `true` | `GET` |
 | [`core/user-create`](#coreuser-create) | Proposed | user | `false` | `false` | `false` | `POST` |
 | [`core/user-update`](#coreuser-update) | Proposed | user | `false` | `false` | `true` | `POST` |
@@ -831,6 +831,9 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
 </details>
 
 ### `core/settings-update`
+
+- A `null` value deletes the stored value of a setting, which then reads as its default when it has one. This is why the ability is `destructive`.
+- The ability is not `idempotent`: repeating a `null` value can fail. For a setting without a default, the second call finds no stored value left to delete.
 
 **Example 1:** a title, a reading option and a deleted option
 
