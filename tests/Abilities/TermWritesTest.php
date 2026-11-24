@@ -1,11 +1,11 @@
 <?php
 /**
- * Tests: the term write abilities `wp/term-create`, `wp/term-update`, and
- * `wp/term-delete` (port of WordPress/ai PR #1103's term tests, on this
+ * Tests: the term write abilities `core-experimental/term-create`, `core-experimental/term-update`, and
+ * `core-experimental/term-delete` (port of WordPress/ai PR #1103's term tests, on this
  * package's per-ability contract shape).
  *
  * Runs under both wp-env matrix environments: trunk (7.2-dev) and stable
- * (6.9/7.1). The `wp/` names are never core-provided, so the package copies
+ * (6.9/7.1). The `core-experimental/` names are never core-provided, so the package copies
  * register and execute identically on both; the source PR's terms tests are
  * ported on the harness conventions the terms-query suite established, with
  * the `default_category` self-check carried over (core's `map_meta_cap()`
@@ -140,9 +140,9 @@ final class TermWritesTest extends TestCase {
 		 * bookkeeping instead of re-registering on a replaced name).
 		 */
 		$entries = array(
-			'wp/term-create' => Term_Create::class,
-			'wp/term-update' => Term_Update::class,
-			'wp/term-delete' => Term_Delete::class,
+			'core-experimental/term-create' => Term_Create::class,
+			'core-experimental/term-update' => Term_Update::class,
+			'core-experimental/term-delete' => Term_Delete::class,
 		);
 
 		global $wp_current_filter;
@@ -244,9 +244,9 @@ final class TermWritesTest extends TestCase {
 	 */
 	private function execute_method_for( string $ability_name ): string {
 		$methods = array(
-			'wp/term-create' => 'execute_term_create',
-			'wp/term-update' => 'execute_term_update',
-			'wp/term-delete' => 'execute_term_delete',
+			'core-experimental/term-create' => 'execute_term_create',
+			'core-experimental/term-update' => 'execute_term_update',
+			'core-experimental/term-delete' => 'execute_term_delete',
 		);
 
 		return $methods[ $ability_name ];
@@ -392,9 +392,9 @@ final class TermWritesTest extends TestCase {
 	 * schemas, and the answer shape of the query the writes answer through.
 	 */
 	public function test_registered_once_with_the_pr_contract(): void {
-		$create = $this->get_registered( 'wp/term-create' );
-		$update = $this->get_registered( 'wp/term-update' );
-		$delete = $this->get_registered( 'wp/term-delete' );
+		$create = $this->get_registered( 'core-experimental/term-create' );
+		$update = $this->get_registered( 'core-experimental/term-update' );
+		$delete = $this->get_registered( 'core-experimental/term-delete' );
 
 		self::assertSame( 'Term Create', $create->get_label() );
 		self::assertSame( 'Term Update', $update->get_label() );
@@ -443,7 +443,7 @@ final class TermWritesTest extends TestCase {
 		self::assertSame( 'boolean', $delete_schema['properties']['force']['type'], 'The force flag should be a boolean.' );
 		self::assertSame( 'Optional. Delete the term only if it belongs to this taxonomy.', $delete_schema['properties']['taxonomy']['description'], 'The taxonomy should be an optional guard on delete.' );
 
-		$term_shape = $this->get_registered( 'wp/terms-query' )->get_output_schema()['oneOf'][0];
+		$term_shape = $this->get_registered( 'core-experimental/terms-query' )->get_output_schema()['oneOf'][0];
 		self::assertSame( $term_shape, $create->get_output_schema(), 'The created term should have the shape of a queried term.' );
 		self::assertSame( $term_shape, $update->get_output_schema(), 'The updated term should have the shape of a queried term.' );
 
@@ -486,7 +486,7 @@ final class TermWritesTest extends TestCase {
 			$this->log_in_as( 'administrator' );
 
 			$result = $this->execute(
-				'wp/term-create',
+				'core-experimental/term-create',
 				array(
 					'taxonomy'    => $taxonomy,
 					'name'        => 'My Awesome Term',
@@ -517,7 +517,7 @@ final class TermWritesTest extends TestCase {
 			$this->log_in_as( 'administrator' );
 
 			$result = $this->execute(
-				'wp/term-create',
+				'core-experimental/term-create',
 				array(
 					'taxonomy' => $taxonomy,
 					'name'     => 'Default fields ' . $taxonomy,
@@ -538,13 +538,13 @@ final class TermWritesTest extends TestCase {
 
 	/**
 	 * The ID is always included, even under a field selection asking for one
-	 * detail, and the stored term reads back the same through `wp/terms-query`.
+	 * detail, and the stored term reads back the same through `core-experimental/terms-query`.
 	 */
 	public function test_created_term_reads_back_the_same_through_the_query(): void {
 		$this->log_in_as( 'administrator' );
 
 		$created = $this->execute(
-			'wp/term-create',
+			'core-experimental/term-create',
 			array(
 				'taxonomy' => 'category',
 				'name'     => 'Backreading',
@@ -556,7 +556,7 @@ final class TermWritesTest extends TestCase {
 		self::assertSame( array( 'id', 'description' ), array_keys( $created ), 'The ID should always be included.' );
 
 		$read = $this->execute(
-			'wp/terms-query',
+			'core-experimental/terms-query',
 			array(
 				'id'     => $created['id'],
 				'fields' => array( 'name', 'description', 'taxonomy' ),
@@ -577,7 +577,7 @@ final class TermWritesTest extends TestCase {
 		$existing_id = $this->create_test_term( 'category', 'Existing' );
 
 		$result = $this->execute(
-			'wp/term-create',
+			'core-experimental/term-create',
 			array(
 				'taxonomy' => 'category',
 				'name'     => 'Existing',
@@ -595,7 +595,7 @@ final class TermWritesTest extends TestCase {
 		$this->log_in_as( 'administrator' );
 
 		$result = $this->execute(
-			'wp/term-create',
+			'core-experimental/term-create',
 			array(
 				'taxonomy' => 'invalid-taxonomy',
 				'name'     => 'Invalid Taxonomy',
@@ -613,7 +613,7 @@ final class TermWritesTest extends TestCase {
 		foreach ( $this->core_taxonomies() as $taxonomy ) {
 			$this->log_in_as( 'administrator' );
 
-			$result = $this->execute( 'wp/term-create', array( 'taxonomy' => $taxonomy ) );
+			$result = $this->execute( 'core-experimental/term-create', array( 'taxonomy' => $taxonomy ) );
 
 			$this->assert_error( $result, 'ability_invalid_input', null, 'A term without a name should fail validation.' );
 		}
@@ -627,7 +627,7 @@ final class TermWritesTest extends TestCase {
 		$this->log_in_as( 'administrator' );
 
 		$result = $this->execute(
-			'wp/term-create',
+			'core-experimental/term-create',
 			array(
 				'taxonomy' => 'post_tag',
 				'name'     => 'Blue',
@@ -648,7 +648,7 @@ final class TermWritesTest extends TestCase {
 			$this->log_in_as( 'subscriber' );
 
 			$result = $this->execute(
-				'wp/term-create',
+				'core-experimental/term-create',
 				array(
 					'taxonomy' => $taxonomy,
 					'name'     => 'Incorrect permissions',
@@ -668,7 +668,7 @@ final class TermWritesTest extends TestCase {
 		$this->log_in_as( 'contributor' );
 
 		$result = $this->execute(
-			'wp/term-create',
+			'core-experimental/term-create',
 			array(
 				'taxonomy' => 'category',
 				'name'     => 'Incorrect permissions',
@@ -685,7 +685,7 @@ final class TermWritesTest extends TestCase {
 		$this->log_in_as( 'contributor' );
 
 		$result = $this->execute(
-			'wp/term-create',
+			'core-experimental/term-create',
 			array(
 				'taxonomy'    => 'post_tag',
 				'name'        => 'My Awesome Term',
@@ -727,7 +727,7 @@ final class TermWritesTest extends TestCase {
 
 			foreach ( $allowed_by_taxonomy as $taxonomy => $allowed ) {
 				$result = $this->execute(
-					'wp/term-create',
+					'core-experimental/term-create',
 					array(
 						'taxonomy' => $taxonomy,
 						'name'     => $name,
@@ -758,7 +758,7 @@ final class TermWritesTest extends TestCase {
 		$parent = $this->create_test_term( 'category', 'test-category' );
 
 		$result = $this->execute(
-			'wp/term-create',
+			'core-experimental/term-create',
 			array(
 				'taxonomy' => 'category',
 				'name'     => 'My Awesome Term',
@@ -779,7 +779,7 @@ final class TermWritesTest extends TestCase {
 		$this->log_in_as( 'administrator' );
 
 		$result = $this->execute(
-			'wp/term-create',
+			'core-experimental/term-create',
 			array(
 				'taxonomy' => 'category',
 				'name'     => 'My Awesome Term',
@@ -798,7 +798,7 @@ final class TermWritesTest extends TestCase {
 		$this->log_in_as( 'administrator' );
 
 		$result = $this->execute(
-			'wp/term-create',
+			'core-experimental/term-create',
 			array(
 				'taxonomy' => 'category',
 				'name'     => 'My Awesome Term',
@@ -819,7 +819,7 @@ final class TermWritesTest extends TestCase {
 		$this->log_in_as( 'administrator' );
 
 		$result = $this->execute(
-			'wp/term-create',
+			'core-experimental/term-create',
 			array(
 				'taxonomy' => 'post_tag',
 				'name'     => 'My Awesome Term',
@@ -851,7 +851,7 @@ final class TermWritesTest extends TestCase {
 		$fields = array( 'name', 'slug', 'parent' );
 
 		$taken = $this->execute(
-			'wp/term-create',
+			'core-experimental/term-create',
 			array(
 				'taxonomy' => 'category',
 				'name'     => 'Apple',
@@ -869,7 +869,7 @@ final class TermWritesTest extends TestCase {
 		);
 
 		$under_veg = $this->execute(
-			'wp/term-create',
+			'core-experimental/term-create',
 			array(
 				'taxonomy' => 'category',
 				'name'     => 'Apple',
@@ -882,7 +882,7 @@ final class TermWritesTest extends TestCase {
 		self::assertSame( $veg, $under_veg['parent'], 'The term should be created under the other parent.' );
 
 		$top_level = $this->execute(
-			'wp/term-create',
+			'core-experimental/term-create',
 			array(
 				'taxonomy' => 'category',
 				'name'     => 'Apple',
@@ -894,7 +894,7 @@ final class TermWritesTest extends TestCase {
 		self::assertSame( 0, $top_level['parent'], 'The term should be created at the top level.' );
 
 		$own_slug = $this->execute(
-			'wp/term-create',
+			'core-experimental/term-create',
 			array(
 				'taxonomy' => 'category',
 				'name'     => 'Apple',
@@ -918,7 +918,7 @@ final class TermWritesTest extends TestCase {
 		$red = $this->create_test_term( 'post_tag', 'Red' );
 
 		$result = $this->execute(
-			'wp/term-create',
+			'core-experimental/term-create',
 			array(
 				'taxonomy' => 'post_tag',
 				'name'     => 'Red',
@@ -938,7 +938,7 @@ final class TermWritesTest extends TestCase {
 
 		foreach ( array( '', '<b></b>' ) as $name ) {
 			$result = $this->execute(
-				'wp/term-create',
+				'core-experimental/term-create',
 				array(
 					'taxonomy' => 'post_tag',
 					'name'     => $name,
@@ -957,7 +957,7 @@ final class TermWritesTest extends TestCase {
 		$this->log_in_as( 'administrator' );
 
 		$result = $this->execute(
-			'wp/term-create',
+			'core-experimental/term-create',
 			array(
 				'taxonomy' => 'wpai_secret',
 				'name'     => 'Secret term',
@@ -967,7 +967,7 @@ final class TermWritesTest extends TestCase {
 		$this->assert_error( $result, 'ability_invalid_input', null, 'The schema should refuse an unexposed taxonomy.' );
 
 		$direct = $this->execute_raw(
-			'wp/term-create',
+			'core-experimental/term-create',
 			array(
 				'taxonomy' => 'wpai_secret',
 				'name'     => 'Secret term',
@@ -995,7 +995,7 @@ final class TermWritesTest extends TestCase {
 			);
 
 			$result = $this->execute(
-				'wp/term-update',
+				'core-experimental/term-update',
 				array(
 					'id'     => $term_id,
 					'name'   => 'Renamed',
@@ -1023,7 +1023,7 @@ final class TermWritesTest extends TestCase {
 		$tag_id = $this->create_test_term( 'post_tag', 'Green', array( 'slug' => 'green' ) );
 
 		$renamed = $this->execute(
-			'wp/term-update',
+			'core-experimental/term-update',
 			array(
 				'id'     => $tag_id,
 				'name'   => 'Lime green',
@@ -1034,7 +1034,7 @@ final class TermWritesTest extends TestCase {
 		self::assertSame( 'green', $renamed['slug'], 'Renaming should keep the slug.' );
 
 		$cleared = $this->execute(
-			'wp/term-update',
+			'core-experimental/term-update',
 			array(
 				'id'     => $tag_id,
 				'slug'   => 'lime-green',
@@ -1056,7 +1056,7 @@ final class TermWritesTest extends TestCase {
 		$apple = $this->create_test_term( 'category', 'Apple', array( 'parent' => $fruit ) );
 
 		$moved = $this->execute(
-			'wp/term-update',
+			'core-experimental/term-update',
 			array(
 				'id'     => $apple,
 				'parent' => $veg,
@@ -1067,7 +1067,7 @@ final class TermWritesTest extends TestCase {
 		self::assertSame( $veg, $moved['parent'], 'The term should move under the new parent.' );
 
 		$top = $this->execute(
-			'wp/term-update',
+			'core-experimental/term-update',
 			array(
 				'id'     => $apple,
 				'parent' => 0,
@@ -1087,7 +1087,7 @@ final class TermWritesTest extends TestCase {
 		$tag_id = $this->create_test_term( 'post_tag', 'No change', array( 'slug' => 'no-change' ) );
 
 		$result = $this->execute(
-			'wp/term-update',
+			'core-experimental/term-update',
 			array(
 				'id'     => $tag_id,
 				'fields' => array( 'name', 'slug', 'count' ),
@@ -1109,7 +1109,7 @@ final class TermWritesTest extends TestCase {
 		$tag_id      = $this->create_test_term( 'post_tag', 'Parentless tag' );
 
 		$invalid = $this->execute(
-			'wp/term-update',
+			'core-experimental/term-update',
 			array(
 				'id'     => $category_id,
 				'parent' => self::IMPOSSIBLY_HIGH_NUMBER,
@@ -1118,7 +1118,7 @@ final class TermWritesTest extends TestCase {
 		$this->assert_error( $invalid, 'terms_term_invalid', 400, 'A missing parent should be reported.' );
 
 		$flat = $this->execute(
-			'wp/term-update',
+			'core-experimental/term-update',
 			array(
 				'id'     => $tag_id,
 				'parent' => $category_id,
@@ -1138,7 +1138,7 @@ final class TermWritesTest extends TestCase {
 		$category_id = $this->create_test_term( 'category', 'The category' );
 
 		$result = $this->execute(
-			'wp/term-update',
+			'core-experimental/term-update',
 			array(
 				'id'       => $category_id,
 				'taxonomy' => 'post_tag',
@@ -1149,7 +1149,7 @@ final class TermWritesTest extends TestCase {
 		$this->assert_denied( $result, 'A guard mismatch should deny the update.' );
 
 		$direct = $this->execute_raw(
-			'wp/term-update',
+			'core-experimental/term-update',
 			array(
 				'id'       => $category_id,
 				'taxonomy' => 'post_tag',
@@ -1171,14 +1171,14 @@ final class TermWritesTest extends TestCase {
 		$hidden_id = $this->create_test_term( 'wpai_secret', 'Hidden genre', array( 'slug' => 'hidden-genre' ) );
 
 		$hidden  = $this->execute(
-			'wp/term-update',
+			'core-experimental/term-update',
 			array(
 				'id'   => $hidden_id,
 				'name' => 'Renamed',
 			)
 		);
 		$missing = $this->execute(
-			'wp/term-update',
+			'core-experimental/term-update',
 			array(
 				'id'   => self::IMPOSSIBLY_HIGH_NUMBER,
 				'name' => 'Renamed',
@@ -1201,7 +1201,7 @@ final class TermWritesTest extends TestCase {
 
 		foreach ( array( 'Not a number', 1.5 ) as $malformed_id ) {
 			$direct = $this->execute_raw(
-				'wp/term-update',
+				'core-experimental/term-update',
 				array(
 					'id'   => $malformed_id,
 					'name' => 'Hijacked',
@@ -1229,7 +1229,7 @@ final class TermWritesTest extends TestCase {
 
 			$this->log_in_as( 'subscriber' );
 			$subscriber = $this->execute(
-				'wp/term-update',
+				'core-experimental/term-update',
 				array(
 					'id'   => $term_id,
 					'name' => 'Renamed by a subscriber',
@@ -1239,7 +1239,7 @@ final class TermWritesTest extends TestCase {
 
 			$this->log_in_as( 'contributor' );
 			$contributor = $this->execute(
-				'wp/term-update',
+				'core-experimental/term-update',
 				array(
 					'id'   => $term_id,
 					'name' => 'Renamed by a contributor',
@@ -1249,7 +1249,7 @@ final class TermWritesTest extends TestCase {
 
 			$this->log_in_as( 'editor' );
 			$editor = $this->execute(
-				'wp/term-update',
+				'core-experimental/term-update',
 				array(
 					'id'     => $term_id,
 					'name'   => 'Renamed by an editor',
@@ -1276,7 +1276,7 @@ final class TermWritesTest extends TestCase {
 		wp_set_current_user( 0 );
 
 		$result = $this->execute(
-			'wp/term-update',
+			'core-experimental/term-update',
 			array(
 				'id'   => $term_id,
 				'name' => 'Renamed by nobody',
@@ -1299,7 +1299,7 @@ final class TermWritesTest extends TestCase {
 
 		$this->log_in_as( 'subscriber' );
 		$subscriber = $this->execute(
-			'wp/term-update',
+			'core-experimental/term-update',
 			array(
 				'id'   => $tag_id,
 				'name' => 'Renamed by a subscriber',
@@ -1319,7 +1319,7 @@ final class TermWritesTest extends TestCase {
 
 		try {
 			$result = $this->execute(
-				'wp/term-update',
+				'core-experimental/term-update',
 				array(
 					'id'     => $tag_id,
 					'name'   => 'Renamed under a granted cap',
@@ -1356,7 +1356,7 @@ final class TermWritesTest extends TestCase {
 			);
 
 			$result = $this->execute(
-				'wp/term-delete',
+				'core-experimental/term-delete',
 				array(
 					'id'     => $term_id,
 					'force'  => true,
@@ -1383,7 +1383,7 @@ final class TermWritesTest extends TestCase {
 
 		$fields = array( 'name', 'slug', 'count' );
 		$read   = $this->execute(
-			'wp/terms-query',
+			'core-experimental/terms-query',
 			array(
 				'id'     => $tag_id,
 				'fields' => $fields,
@@ -1392,7 +1392,7 @@ final class TermWritesTest extends TestCase {
 		self::assertIsArray( $read, 'The term should be readable before its deletion.' );
 
 		$deleted = $this->execute(
-			'wp/term-delete',
+			'core-experimental/term-delete',
 			array(
 				'id'     => $tag_id,
 				'force'  => true,
@@ -1413,7 +1413,7 @@ final class TermWritesTest extends TestCase {
 		$tag_id = $this->create_test_term( 'post_tag', 'Unreadable after delete' );
 
 		$deleted = $this->execute(
-			'wp/term-delete',
+			'core-experimental/term-delete',
 			array(
 				'id'    => $tag_id,
 				'force' => true,
@@ -1421,7 +1421,7 @@ final class TermWritesTest extends TestCase {
 		);
 		self::assertIsArray( $deleted, 'The tag should be deleted.' );
 
-		$read = $this->execute( 'wp/terms-query', array( 'id' => $tag_id ) );
+		$read = $this->execute( 'core-experimental/terms-query', array( 'id' => $tag_id ) );
 		$this->assert_denied( $read, 'A deleted term should be unreadable.' );
 	}
 
@@ -1436,11 +1436,11 @@ final class TermWritesTest extends TestCase {
 
 			$term_id = $this->create_test_term( $taxonomy, 'Not doomed ' . $taxonomy );
 
-			$without_force = $this->execute( 'wp/term-delete', array( 'id' => $term_id ) );
+			$without_force = $this->execute( 'core-experimental/term-delete', array( 'id' => $term_id ) );
 			$this->assert_error( $without_force, 'terms_trash_not_supported', 501, 'A delete without force should be refused.' );
 
 			$false_force = $this->execute(
-				'wp/term-delete',
+				'core-experimental/term-delete',
 				array(
 					'id'    => $term_id,
 					'force' => false,
@@ -1462,7 +1462,7 @@ final class TermWritesTest extends TestCase {
 		$tag_id = $this->create_test_term( 'post_tag', 'Guarded tag' );
 
 		$missing = $this->execute(
-			'wp/term-delete',
+			'core-experimental/term-delete',
 			array(
 				'id'    => self::IMPOSSIBLY_HIGH_NUMBER,
 				'force' => true,
@@ -1471,7 +1471,7 @@ final class TermWritesTest extends TestCase {
 		$this->assert_denied( $missing, 'A missing term should be denied.' );
 
 		$guarded = $this->execute(
-			'wp/term-delete',
+			'core-experimental/term-delete',
 			array(
 				'id'       => $tag_id,
 				'taxonomy' => 'category',
@@ -1481,7 +1481,7 @@ final class TermWritesTest extends TestCase {
 		$this->assert_denied( $guarded, 'A guard mismatch should deny the delete.' );
 
 		$direct = $this->execute_raw(
-			'wp/term-delete',
+			'core-experimental/term-delete',
 			array(
 				'id'    => self::IMPOSSIBLY_HIGH_NUMBER,
 				'force' => true,
@@ -1501,7 +1501,7 @@ final class TermWritesTest extends TestCase {
 
 		foreach ( array( 'Not a number', 0, 1.5 ) as $malformed_id ) {
 			$direct = $this->execute_raw(
-				'wp/term-delete',
+				'core-experimental/term-delete',
 				array(
 					'id'    => $malformed_id,
 					'force' => true,
@@ -1522,11 +1522,11 @@ final class TermWritesTest extends TestCase {
 
 		$tag_id = $this->create_test_term( 'post_tag', 'Unforced tag' );
 
-		$direct = $this->execute_raw( 'wp/term-delete', array( 'id' => $tag_id ) );
+		$direct = $this->execute_raw( 'core-experimental/term-delete', array( 'id' => $tag_id ) );
 		$this->assert_error( $direct, 'terms_trash_not_supported', 501, 'A direct call should refuse a delete without force.' );
 
 		$coerced = $this->execute_raw(
-			'wp/term-delete',
+			'core-experimental/term-delete',
 			array(
 				'id'    => $tag_id,
 				'force' => 'false',
@@ -1552,7 +1552,7 @@ final class TermWritesTest extends TestCase {
 
 			$this->log_in_as( 'subscriber' );
 			$result = $this->execute(
-				'wp/term-delete',
+				'core-experimental/term-delete',
 				array(
 					'id'    => $term_id,
 					'force' => true,
@@ -1564,7 +1564,7 @@ final class TermWritesTest extends TestCase {
 
 			wp_set_current_user( 0 );
 			$logged_out = $this->execute(
-				'wp/term-delete',
+				'core-experimental/term-delete',
 				array(
 					'id'    => $term_id,
 					'force' => true,
@@ -1606,7 +1606,7 @@ final class TermWritesTest extends TestCase {
 
 			foreach ( $term_ids as $taxonomy => $term_id ) {
 				$result = $this->execute(
-					'wp/term-delete',
+					'core-experimental/term-delete',
 					array(
 						'id'    => $term_id,
 						'force' => true,
@@ -1637,7 +1637,7 @@ final class TermWritesTest extends TestCase {
 		$this->log_in_as( 'contributor' );
 
 		$created = $this->execute(
-			'wp/term-create',
+			'core-experimental/term-create',
 			array(
 				'taxonomy' => 'post_tag',
 				'name'     => 'Contributor tag',
@@ -1647,7 +1647,7 @@ final class TermWritesTest extends TestCase {
 		$this->track_term( (int) $created['id'], 'post_tag' );
 
 		$deleted = $this->execute(
-			'wp/term-delete',
+			'core-experimental/term-delete',
 			array(
 				'id'    => $tag_id,
 				'force' => true,
@@ -1675,9 +1675,9 @@ final class TermWritesTest extends TestCase {
 			'force' => true,
 		);
 
-		$this->assert_denied( $this->execute( 'wp/term-delete', $input ), 'The default category should not be deleted.' );
+		$this->assert_denied( $this->execute( 'core-experimental/term-delete', $input ), 'The default category should not be deleted.' );
 
-		$direct = $this->execute_raw( 'wp/term-delete', $input );
+		$direct = $this->execute_raw( 'core-experimental/term-delete', $input );
 		$this->assert_error( $direct, 'terms_cannot_delete', 403, 'A direct call should not delete the default category either.' );
 
 		$granted = static function ( $caps, $cap ) {
@@ -1690,7 +1690,7 @@ final class TermWritesTest extends TestCase {
 		add_filter( 'map_meta_cap', $granted, 10, 2 );
 
 		try {
-			$forced = $this->execute_raw( 'wp/term-delete', $input );
+			$forced = $this->execute_raw( 'core-experimental/term-delete', $input );
 			$this->assert_error( $forced, 'terms_cannot_delete', 500, 'A granted capability should still not delete the default category.' );
 		} finally {
 			remove_filter( 'map_meta_cap', $granted, 10 );
@@ -1711,7 +1711,7 @@ final class TermWritesTest extends TestCase {
 		$child       = $this->create_test_term( 'category', 'Child', array( 'parent' => $parent ) );
 
 		$deleted = $this->execute(
-			'wp/term-delete',
+			'core-experimental/term-delete',
 			array(
 				'id'    => $parent,
 				'force' => true,

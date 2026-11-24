@@ -1,9 +1,9 @@
 <?php
 /**
- * Tests: `wp/user-create`, `wp/user-update`, and `wp/user-delete` (port of
+ * Tests: `core-experimental/user-create`, `core-experimental/user-update`, and `core-experimental/user-delete` (port of
  * WordPress/ai PR #1105's user write tests, on this package's contract shape).
  *
- * Runs under both wp-env matrix environments. The `wp/` names are never
+ * Runs under both wp-env matrix environments. The `core-experimental/` names are never
  * core-provided, so the package copies register and execute identically on
  * both. The suite pins the ported user-write behaviors — the capability gates,
  * the roles/reassign rules, the permanent deletion, and the updated-only
@@ -161,13 +161,13 @@ final class UserWritesTest extends TestCase {
 	}
 
 	/**
-	 * All three write abilities register exactly once, under the `wp/` names, with
+	 * All three write abilities register exactly once, under the `core-experimental/` names, with
 	 * the PR's annotations and the `user` category.
 	 */
 	public function test_registered_once_with_the_pr_contract(): void {
-		$create = $this->get_registered( 'wp/user-create' );
-		$update = $this->get_registered( 'wp/user-update' );
-		$delete = $this->get_registered( 'wp/user-delete' );
+		$create = $this->get_registered( 'core-experimental/user-create' );
+		$update = $this->get_registered( 'core-experimental/user-update' );
+		$delete = $this->get_registered( 'core-experimental/user-delete' );
 
 		self::assertSame( 'Create User', $create->get_label() );
 		self::assertSame( 'Update User', $update->get_label() );
@@ -221,7 +221,7 @@ final class UserWritesTest extends TestCase {
 	public function test_create_with_password_answers_the_projected_user(): void {
 		$this->log_in_as( 'administrator' );
 
-		$result = $this->get_registered( 'wp/user-create' )->execute(
+		$result = $this->get_registered( 'core-experimental/user-create' )->execute(
 			array(
 				'username' => 'uw_created_user',
 				'email'    => 'created@example.com',
@@ -250,7 +250,7 @@ final class UserWritesTest extends TestCase {
 	public function test_create_without_password_generates_one(): void {
 		$this->log_in_as( 'administrator' );
 
-		$result = $this->get_registered( 'wp/user-create' )->execute(
+		$result = $this->get_registered( 'core-experimental/user-create' )->execute(
 			array(
 				'username' => 'uw_generated_user',
 				'email'    => 'generated@example.com',
@@ -279,7 +279,7 @@ final class UserWritesTest extends TestCase {
 		$this->log_in_as( 'editor' );
 		$this->assert_error_response(
 			'ability_invalid_permissions',
-			$this->get_registered( 'wp/user-create' )->execute(
+			$this->get_registered( 'core-experimental/user-create' )->execute(
 				array(
 					'username' => 'uw_editor_create',
 					'email'    => 'editor-create@example.com',
@@ -294,7 +294,7 @@ final class UserWritesTest extends TestCase {
 		$this->log_in_as( 'subscriber' );
 		$this->assert_error_response(
 			'ability_invalid_permissions',
-			$this->get_registered( 'wp/user-create' )->execute(
+			$this->get_registered( 'core-experimental/user-create' )->execute(
 				array(
 					'username' => 'uw_subscriber_create',
 					'email'    => 'subscriber-create@example.com',
@@ -314,7 +314,7 @@ final class UserWritesTest extends TestCase {
 		// An invalid username is refused with its own error.
 		$this->assert_error_response(
 			'users_invalid_param',
-			$this->get_registered( 'wp/user-create' )->execute(
+			$this->get_registered( 'core-experimental/user-create' )->execute(
 				array(
 					'username' => 'not valid!',
 					'email'    => 'bad-user@example.com',
@@ -327,7 +327,7 @@ final class UserWritesTest extends TestCase {
 		// An empty password is refused.
 		$this->assert_error_response(
 			'users_invalid_param',
-			$this->get_registered( 'wp/user-create' )->execute(
+			$this->get_registered( 'core-experimental/user-create' )->execute(
 				array(
 					'username' => 'uw_empty_password',
 					'email'    => 'empty-pass@example.com',
@@ -347,7 +347,7 @@ final class UserWritesTest extends TestCase {
 		$this->log_in_as( 'administrator' );
 		$target_id = $this->create_user( 'uw_update_target', 'subscriber' );
 
-		$result = $this->get_registered( 'wp/user-update' )->execute(
+		$result = $this->get_registered( 'core-experimental/user-update' )->execute(
 			array(
 				'id'          => $target_id,
 				'name'        => 'Validated Updated Name',
@@ -381,7 +381,7 @@ final class UserWritesTest extends TestCase {
 		$this->log_in_as( 'editor' );
 		$this->assert_error_response(
 			'ability_invalid_permissions',
-			$this->get_registered( 'wp/user-update' )->execute(
+			$this->get_registered( 'core-experimental/user-update' )->execute(
 				array(
 					'id'   => $target_id,
 					'name' => 'Denied',
@@ -395,7 +395,7 @@ final class UserWritesTest extends TestCase {
 		$this->log_in_as( 'administrator' );
 		$this->assert_error_response(
 			'users_user_invalid_role',
-			$this->get_registered( 'wp/user-update' )->execute(
+			$this->get_registered( 'core-experimental/user-update' )->execute(
 				array(
 					'id'    => $this->user_ids['role_administrator'],
 					'roles' => array(),
@@ -408,7 +408,7 @@ final class UserWritesTest extends TestCase {
 		// An unknown role is refused.
 		$this->assert_error_response(
 			'ability_invalid_input',
-			$this->get_registered( 'wp/user-update' )->execute(
+			$this->get_registered( 'core-experimental/user-update' )->execute(
 				array(
 					'id'    => $target_id,
 					'roles' => array( 'not-a-role' ),
@@ -439,7 +439,7 @@ final class UserWritesTest extends TestCase {
 		// An admin cannot delete their own account.
 		$this->assert_error_response(
 			'users_cannot_delete',
-			$this->get_registered( 'wp/user-delete' )->execute(
+			$this->get_registered( 'core-experimental/user-delete' )->execute(
 				array(
 					'id'       => $this->user_ids['role_administrator'],
 					'reassign' => false,
@@ -450,7 +450,7 @@ final class UserWritesTest extends TestCase {
 		);
 
 		// Reassign false: the posts go to the trash; the answer is the user as it was.
-		$result = $this->get_registered( 'wp/user-delete' )->execute(
+		$result = $this->get_registered( 'core-experimental/user-delete' )->execute(
 			array(
 				'id'       => $target_id,
 				'reassign' => false,
@@ -463,7 +463,7 @@ final class UserWritesTest extends TestCase {
 		self::assertFalse( get_userdata( $target_id ), 'The user should be permanently deleted (users cannot be trashed).' );
 		$this->assert_error_response(
 			'ability_invalid_permissions',
-			$this->get_registered( 'wp/user-delete' )->execute(
+			$this->get_registered( 'core-experimental/user-delete' )->execute(
 				array(
 					'id'       => $target_id,
 					'reassign' => false,
@@ -477,7 +477,7 @@ final class UserWritesTest extends TestCase {
 		$second_id = $this->create_user( 'uw_delete_second', 'subscriber' );
 		$this->assert_error_response(
 			'users_user_invalid_reassign',
-			$this->get_registered( 'wp/user-delete' )->execute(
+			$this->get_registered( 'core-experimental/user-delete' )->execute(
 				array(
 					'id'       => $second_id,
 					'reassign' => 4294967296,
@@ -490,7 +490,7 @@ final class UserWritesTest extends TestCase {
 		// A valid reassign moves the posts.
 		$third_id = $this->create_user( 'uw_delete_third', 'subscriber' );
 		$post_id  = $this->create_post( $third_id );
-		$result   = $this->get_registered( 'wp/user-delete' )->execute(
+		$result   = $this->get_registered( 'core-experimental/user-delete' )->execute(
 			array(
 				'id'       => $third_id,
 				'reassign' => $reassign_id,
@@ -512,7 +512,7 @@ final class UserWritesTest extends TestCase {
 		$this->log_in_as( 'editor' );
 		$this->assert_error_response(
 			'ability_invalid_permissions',
-			$this->get_registered( 'wp/user-delete' )->execute(
+			$this->get_registered( 'core-experimental/user-delete' )->execute(
 				array(
 					'id'       => $target_id,
 					'reassign' => false,
@@ -525,7 +525,7 @@ final class UserWritesTest extends TestCase {
 		$this->log_in_as( 'subscriber' );
 		$this->assert_error_response(
 			'ability_invalid_permissions',
-			$this->get_registered( 'wp/user-delete' )->execute(
+			$this->get_registered( 'core-experimental/user-delete' )->execute(
 				array(
 					'id'       => $target_id,
 					'reassign' => false,
@@ -547,7 +547,7 @@ final class UserWritesTest extends TestCase {
 	public function test_delete_missing_user_is_denied(): void {
 		$this->log_in_as( 'administrator' );
 
-		$result = $this->get_registered( 'wp/user-delete' )->execute(
+		$result = $this->get_registered( 'core-experimental/user-delete' )->execute(
 			array(
 				'id'       => 4294967296,
 				'reassign' => false,

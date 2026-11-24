@@ -4,14 +4,14 @@
  *
  * Ported from WordPress/ai PR #1104 (https://github.com/WordPress/ai/pull/1104) by @jorgefilipecosta.
  *
- * The helpers shared with this package's `wp/media-query` port (attachment lookup,
+ * The helpers shared with this package's `core-experimental/media-query` port (attachment lookup,
  * permission checks, field projection, the response date formatting, and the file-size /
  * file-name accessors) are extracted verbatim from Media_Query.php with `private`
  * relaxed to `protected` so the write ability subclasses reuse them; the global-post
  * restoration the upstream PR refactored into a helper is ported as written. The write
  * logic itself (upload from base64 data or a URL sideload, update, delete) is a faithful
  * port of the PR: upstream names the abilities `core/media-*`; this package ships them
- * under the experimental tier's `wp/` prefix (see NAME-LIFECYCLE.md), with the `default`
+ * under the experimental tier's `core-experimental/` prefix (see NAME-LIFECYCLE.md), with the `default`
  * text domain and registration owned by the package's Registrar.
  *
  * @package WordPress\Abilities
@@ -28,9 +28,9 @@ use WP_Post_Type;
 use WordPress\Abilities\Abstract_Core_Ability;
 
 /**
- * Shared base for the `wp/media-upload`, `wp/media-update`, and `wp/media-delete` abilities.
+ * Shared base for the `core-experimental/media-upload`, `core-experimental/media-update`, and `core-experimental/media-delete` abilities.
  *
- * A written attachment is answered through the same field projection as `wp/media-query`, in
+ * A written attachment is answered through the same field projection as `core-experimental/media-query`, in
  * the edit context: the returned item's raw fields do not depend on edit access, because the
  * abilities' permission callbacks already require it.
  *
@@ -99,7 +99,7 @@ abstract class Abstract_Media_Write extends Abstract_Core_Ability {
 	// -- The helpers below are extracted verbatim from this package's Media_Query
 	// -- port of WordPress/ai PR #1098, with `private` relaxed to `protected` so
 	// -- the write abilities reuse them. They are the field projection that lets
-	// -- a written attachment be read back unchanged through `wp/media-query`'s
+	// -- a written attachment be read back unchanged through `core-experimental/media-query`'s
 	// -- contract.
 
 	/**
@@ -273,7 +273,7 @@ abstract class Abstract_Media_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * The attachment item field schema, shared by `wp/media-query` and the write
+	 * The attachment item field schema, shared by `core-experimental/media-query` and the write
 	 * abilities (the write output uses it with edit-context descriptions).
 	 *
 	 * @return array<string, array<string, mixed>> Field definitions keyed by field name.
@@ -566,7 +566,7 @@ abstract class Abstract_Media_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Permission callback for the `wp/media-upload` ability.
+	 * Permission callback for the `core-experimental/media-upload` ability.
 	 *
 	 * Requires an authenticated user who can create attachments and upload files. The author
 	 * and the parent post are checked during execution, where the error can name the refused
@@ -586,7 +586,7 @@ abstract class Abstract_Media_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Executes the `wp/media-upload` ability.
+	 * Executes the `core-experimental/media-upload` ability.
 	 *
 	 * {@see WP_Ability::execute()} always runs {@see self::create_item_permissions_check()}
 	 * first. The global post, which preparing the response replaces, is restored afterwards.
@@ -607,7 +607,7 @@ abstract class Abstract_Media_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Permission callback for the `wp/media-update` ability.
+	 * Permission callback for the `core-experimental/media-update` ability.
 	 *
 	 * Requires an authenticated user who can edit the attachment; a missing attachment is
 	 * denied like one the user cannot edit. The rest of the input is checked during
@@ -627,7 +627,7 @@ abstract class Abstract_Media_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Executes the `wp/media-update` ability.
+	 * Executes the `core-experimental/media-update` ability.
 	 *
 	 * {@see WP_Ability::execute()} always runs {@see self::update_item_permissions_check()}
 	 * first. The global post, which preparing the response replaces, is restored afterwards.
@@ -648,7 +648,7 @@ abstract class Abstract_Media_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Permission callback for the `wp/media-delete` ability.
+	 * Permission callback for the `core-experimental/media-delete` ability.
 	 *
 	 * Requires an authenticated user who can delete the attachment; a missing attachment is
 	 * denied like one the user cannot delete.
@@ -667,7 +667,7 @@ abstract class Abstract_Media_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Executes the `wp/media-delete` ability.
+	 * Executes the `core-experimental/media-delete` ability.
 	 *
 	 * {@see WP_Ability::execute()} always runs {@see self::delete_item_permissions_check()}
 	 * first. The global post, which preparing the response replaces, is restored afterwards.
@@ -1575,7 +1575,7 @@ abstract class Abstract_Media_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Builds the input schema for the `wp/media-upload` ability.
+	 * Builds the input schema for the `core-experimental/media-upload` ability.
 	 *
 	 * The file comes either as base64 data with a file name, or as a URL to download an
 	 * image from. The two modes are modeled as a `oneOf`, and neither accepts the other's
@@ -1630,7 +1630,7 @@ abstract class Abstract_Media_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Builds the input schema for the `wp/media-update` ability.
+	 * Builds the input schema for the `core-experimental/media-update` ability.
 	 *
 	 * The status is not restricted by an enum: an attachment may keep its current status,
 	 * such as `inherit`, so the status is validated against the attachment during execution.
@@ -1707,7 +1707,7 @@ abstract class Abstract_Media_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Builds the input schema for the `wp/media-delete` ability.
+	 * Builds the input schema for the `core-experimental/media-delete` ability.
 	 *
 	 * @return array<string, mixed> The input JSON Schema.
 	 */
@@ -1732,7 +1732,7 @@ abstract class Abstract_Media_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Builds the output schema for the `wp/media-delete` ability.
+	 * Builds the output schema for the `core-experimental/media-delete` ability.
 	 *
 	 * Trashing returns the trashed attachment directly; a forced deletion returns a `deleted`
 	 * flag with the deleted attachment under `previous`.

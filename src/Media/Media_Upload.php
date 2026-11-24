@@ -1,6 +1,6 @@
 <?php
 /**
- * Canonical WordPress abilities: `wp/media-upload` ability.
+ * Canonical WordPress abilities: `core-experimental/media-upload` ability.
  *
  * Ported from WordPress/ai PR #1104 (https://github.com/WordPress/ai/pull/1104) by @jorgefilipecosta.
  *
@@ -13,10 +13,10 @@ namespace WordPress\Abilities\Media;
 use WP_Error;
 
 /**
- * Registers the `wp/media-upload` ability, which uploads a file to the media
+ * Registers the `core-experimental/media-upload` ability, which uploads a file to the media
  * library, from base64 data and a file name, or by downloading an image from a
  * URL. All logic is shared with the sibling media write abilities in
- * {@see Abstract_Media_Write} (which also reuses the `wp/media-query` field
+ * {@see Abstract_Media_Write} (which also reuses the `core-experimental/media-query` field
  * projection), and this class only wires it into the authoring surface.
  *
  * @package WordPress\Abilities
@@ -28,7 +28,7 @@ final class Media_Upload extends Abstract_Media_Write {
 	 * @return string
 	 */
 	protected function ability_name(): string {
-		return 'wp/media-upload';
+		return 'core-experimental/media-upload';
 	}
 
 	/**

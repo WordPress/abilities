@@ -1,10 +1,10 @@
 <?php
 /**
- * Tests: `wp/media-upload` (port of WordPress/ai PR #1104's upload tests, on
+ * Tests: `core-experimental/media-upload` (port of WordPress/ai PR #1104's upload tests, on
  * this package's per-ability contract shape).
  *
  * Runs under both wp-env matrix environments: trunk (7.2-dev) and stable
- * (6.9/7.1). The `wp/` name is never core-provided, so the package copy
+ * (6.9/7.1). The `core-experimental/` name is never core-provided, so the package copy
  * registers and executes identically on both; the suite pins the ported
  * attachment-endpoint write behaviors — permissions, capability floors, the
  * base64/URL upload transports, the field projection in the edit context, the
@@ -31,7 +31,7 @@ use WordPress\Abilities\Registrar;
 use Yoast\PHPUnitPolyfills\TestCases\TestCase;
 
 /**
- * Contract tests for `wp/media-upload`.
+ * Contract tests for `core-experimental/media-upload`.
  */
 final class MediaUploadTest extends TestCase {
 
@@ -130,11 +130,11 @@ final class MediaUploadTest extends TestCase {
 	}
 
 	/**
-	 * The registered `wp/media-upload` ability.
+	 * The registered `core-experimental/media-upload` ability.
 	 */
 	private function get_registered(): WP_Ability {
 		// Intentionally resolved through the registry to test the registered contract.
-		$ability = WP_Abilities_Registry::get_instance()->get_registered( 'wp/media-upload' );
+		$ability = WP_Abilities_Registry::get_instance()->get_registered( 'core-experimental/media-upload' );
 		self::assertNotNull( $ability, 'The ability should be registered through the Registrar.' );
 
 		return $ability;
@@ -147,7 +147,7 @@ final class MediaUploadTest extends TestCase {
 	 * @return mixed The ability result.
 	 */
 	private function upload( array $input = array() ) {
-		$ability = WP_Abilities_Registry::get_instance()->get_registered( 'wp/media-upload' );
+		$ability = WP_Abilities_Registry::get_instance()->get_registered( 'core-experimental/media-upload' );
 		self::assertNotNull( $ability, 'The ability should be registered through the Registrar.' );
 
 		return $ability->execute( $input );
@@ -895,7 +895,7 @@ final class MediaUploadTest extends TestCase {
 		);
 		$fields = array( 'date', 'date_gmt', 'status', 'title_raw', 'title_rendered', 'author', 'description_raw', 'caption_raw', 'caption_rendered', 'alt_text', 'media_type', 'mime_type', 'post' );
 
-		$request = new WP_REST_Request( 'POST', '/wp/v2/media' );
+		$request = new WP_REST_Request( 'POST', '/core-experimental/v2/media' );
 		$request->set_header( 'Content-Type', 'image/jpeg' );
 		$request->set_header( 'Content-Disposition', 'attachment; filename=canola.jpg' );
 		$request->set_body( (string) file_get_contents( (string) constant( 'DIR_TESTDATA' ) . '/images/canola.jpg' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reads a local test file.

@@ -13,7 +13,7 @@
  * `$edit_context` parameter the write path needs, ported verbatim from the PR's
  * write-side edition. The write logic itself (create, update, delete, the
  * roles/reassign rules) is a faithful port of the PR: upstream names the abilities
- * `core/user-*`; this package ships them under the experimental tier's `wp/`
+ * `core/user-*`; this package ships them under the experimental tier's `core-experimental/`
  * prefix (see NAME-LIFECYCLE.md), with the `default` text domain and registration
  * owned by the package's Registrar.
  *
@@ -30,7 +30,7 @@ use WP_User;
 use WordPress\Abilities\Abstract_Core_Ability;
 
 /**
- * Shared base for the `wp/user-create`, `wp/user-update`, and `wp/user-delete`
+ * Shared base for the `core-experimental/user-create`, `core-experimental/user-update`, and `core-experimental/user-delete`
  * abilities.
  *
  * A written user is answered through the same field projection as
@@ -658,7 +658,7 @@ abstract class Abstract_User_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Permission callback for the `wp/user-create` ability.
+	 * Permission callback for the `core-experimental/user-create` ability.
 	 *
 	 * The rest of the input is checked during execution.
 	 *
@@ -669,7 +669,7 @@ abstract class Abstract_User_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Permission callback for the `wp/user-update` ability.
+	 * Permission callback for the `core-experimental/user-update` ability.
 	 *
 	 * The current user must be able to edit the user, or to promote the user when only the
 	 * roles are given, an empty list included. A roles change still needs the promote
@@ -708,7 +708,7 @@ abstract class Abstract_User_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Permission callback for the `wp/user-delete` ability.
+	 * Permission callback for the `core-experimental/user-delete` ability.
 	 *
 	 * @param mixed $input Optional. The ability input. Default empty array.
 	 * @return bool True if the request may proceed, false otherwise.
@@ -729,7 +729,7 @@ abstract class Abstract_User_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Executes the `wp/user-create` ability.
+	 * Executes the `core-experimental/user-create` ability.
 	 *
 	 * @param mixed $input Optional. The ability input. Default empty array.
 	 * @return array<string, mixed>|\WP_Error The created user, or a WP_Error.
@@ -846,7 +846,7 @@ abstract class Abstract_User_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Executes the `wp/user-update` ability.
+	 * Executes the `core-experimental/user-update` ability.
 	 *
 	 * @param mixed $input Optional. The ability input. Default empty array.
 	 * @return array<string, mixed>|\WP_Error The updated user, or a WP_Error.
@@ -930,7 +930,7 @@ abstract class Abstract_User_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Executes the `wp/user-delete` ability.
+	 * Executes the `core-experimental/user-delete` ability.
 	 *
 	 * Users cannot be trashed, so the user is deleted permanently and returned as it was just
 	 * before the deletion.
@@ -1072,7 +1072,7 @@ abstract class Abstract_User_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Builds the input schema for the `wp/user-create` ability.
+	 * Builds the input schema for the `core-experimental/user-create` ability.
 	 *
 	 * @return array<string, mixed> The input JSON Schema.
 	 */
@@ -1095,7 +1095,7 @@ abstract class Abstract_User_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Builds the input schema for the `wp/user-update` ability.
+	 * Builds the input schema for the `core-experimental/user-update` ability.
 	 *
 	 * @return array<string, mixed> The input JSON Schema.
 	 */
@@ -1119,7 +1119,7 @@ abstract class Abstract_User_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Builds the input schema for the `wp/user-delete` ability.
+	 * Builds the input schema for the `core-experimental/user-delete` ability.
 	 *
 	 * `reassign` also takes a string so the query-string forms of an ID and of false are read
 	 * like the ID and false themselves.

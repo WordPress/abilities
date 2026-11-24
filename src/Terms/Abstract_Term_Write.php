@@ -5,7 +5,7 @@
  * Ported from WordPress/ai PR #1103 (https://github.com/WordPress/ai/pull/1103)
  * by @jorgefilipecosta.
  *
- * The helpers shared with this package's `wp/terms-query` port (the exposed-taxonomy
+ * The helpers shared with this package's `core-experimental/terms-query` port (the exposed-taxonomy
  * check, the term lookup, the `fields` projection, the term response shaping, and the
  * term item schema) are extracted verbatim from Terms_Query.php with `private` relaxed
  * to `protected` so the write ability subclasses reuse them — Terms_Query itself keeps
@@ -13,7 +13,7 @@
  * trio applies to Media_Query). The write logic itself (create via `wp_insert_term`,
  * update via `wp_update_term`, delete with the fail-closed `force` gate and the delete
  * capability re-check) is a faithful port of the PR: upstream names the abilities
- * `core/term-*`; this package ships them under the experimental tier's `wp/` prefix
+ * `core/term-*`; this package ships them under the experimental tier's `core-experimental/` prefix
  * (see NAME-LIFECYCLE.md), with the `default` text domain and registration owned by
  * the package's Registrar.
  *
@@ -37,9 +37,9 @@ use WP_Term;
 use WordPress\Abilities\Abstract_Core_Ability;
 
 /**
- * Shared base for the `wp/term-create`, `wp/term-update`, and `wp/term-delete` abilities.
+ * Shared base for the `core-experimental/term-create`, `core-experimental/term-update`, and `core-experimental/term-delete` abilities.
  *
- * A written term is answered through the same field projection as `wp/terms-query`,
+ * A written term is answered through the same field projection as `core-experimental/terms-query`,
  * limited by the `fields` input, with the ID always included; a delete returns the
  * deleted term under `previous`. Terms write only to the taxonomies exposed to
  * abilities via `show_in_abilities` — the same opt-in machinery the query rides.
@@ -112,7 +112,7 @@ abstract class Abstract_Term_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Checks permission for the `wp/term-create` ability.
+	 * Checks permission for the `core-experimental/term-create` ability.
 	 *
 	 * The taxonomy must be exposed to abilities, and the current user must be able to edit
 	 * its terms when it is hierarchical, or to assign them when it is not. The rest of the
@@ -143,7 +143,7 @@ abstract class Abstract_Term_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Executes the `wp/term-create` ability.
+	 * Executes the `core-experimental/term-create` ability.
 	 *
 	 * {@see WP_Ability::execute()} always runs {@see self::check_create_permission()} first,
 	 * so this only re-validates that the taxonomy is exposed before writing the term.
@@ -201,7 +201,7 @@ abstract class Abstract_Term_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Checks permission for the `wp/term-update` ability.
+	 * Checks permission for the `core-experimental/term-update` ability.
 	 *
 	 * The term must exist in a taxonomy exposed to abilities (and in the `taxonomy` guard
 	 * when given), and the current user must be able to edit it. The rest of the input is
@@ -226,7 +226,7 @@ abstract class Abstract_Term_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Executes the `wp/term-update` ability.
+	 * Executes the `core-experimental/term-update` ability.
 	 *
 	 * {@see WP_Ability::execute()} always runs {@see self::check_update_permission()} first,
 	 * so this only re-validates the lookup itself before writing the term.
@@ -267,7 +267,7 @@ abstract class Abstract_Term_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Checks permission for the `wp/term-delete` ability.
+	 * Checks permission for the `core-experimental/term-delete` ability.
 	 *
 	 * The term must exist in a taxonomy exposed to abilities (and in the `taxonomy` guard
 	 * when given), and the current user must be able to delete it.
@@ -291,7 +291,7 @@ abstract class Abstract_Term_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Executes the `wp/term-delete` ability.
+	 * Executes the `core-experimental/term-delete` ability.
 	 *
 	 * {@see WP_Ability::execute()} always runs {@see self::check_delete_permission()} first;
 	 * this re-validates the lookup and, because the operation is destructive, checks the
@@ -453,7 +453,7 @@ abstract class Abstract_Term_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Builds the input schema for the `wp/term-create` ability.
+	 * Builds the input schema for the `core-experimental/term-create` ability.
 	 *
 	 * `additionalProperties: false` rejects unknown fields instead of dropping them, so e.g.
 	 * passing an `id` fails validation instead of silently creating a new term.
@@ -487,11 +487,11 @@ abstract class Abstract_Term_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Builds the input schema for the `wp/term-update` ability from the create schema.
+	 * Builds the input schema for the `core-experimental/term-update` ability from the create schema.
 	 *
 	 * The term is identified by `id`, and `taxonomy` becomes an optional guard.
 	 *
-	 * @param array<string, mixed> $create_schema The input schema of the `wp/term-create` ability.
+	 * @param array<string, mixed> $create_schema The input schema of the `core-experimental/term-create` ability.
 	 * @return array<string, mixed> The input JSON Schema.
 	 */
 	protected function get_term_update_input_schema( array $create_schema ): array {
@@ -512,7 +512,7 @@ abstract class Abstract_Term_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Builds the input schema for the `wp/term-delete` ability.
+	 * Builds the input schema for the `core-experimental/term-delete` ability.
 	 *
 	 * @param list<string> $taxonomies Exposed taxonomy names.
 	 * @return array<string, mixed> The input JSON Schema.
@@ -576,7 +576,7 @@ abstract class Abstract_Term_Write extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Builds the output schema for the `wp/term-delete` ability.
+	 * Builds the output schema for the `core-experimental/term-delete` ability.
 	 *
 	 * @return array<string, mixed> The output JSON Schema.
 	 */
@@ -598,7 +598,7 @@ abstract class Abstract_Term_Write extends Abstract_Core_Ability {
 	// -- The helpers below are extracted verbatim from this package's Terms_Query
 	// -- port of WordPress/ai PR #1099, with `private` relaxed to `protected` so
 	// -- the write abilities reuse them. They are the field projection that lets
-	// -- a written term be read back unchanged through `wp/terms-query`'s
+	// -- a written term be read back unchanged through `core-experimental/terms-query`'s
 	// -- contract. Only `get_term_for_write()` above adds write-specific logic on
 	// -- top of them.
 

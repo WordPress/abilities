@@ -1,6 +1,6 @@
 <?php
 /**
- * Tests: `wp/settings-update` (port of WordPress/ai PR #764's settings update
+ * Tests: `core-experimental/settings-update` (port of WordPress/ai PR #764's settings update
  * tests, on this package's per-ability contract shape).
  *
  * Runs under both wp-env matrix environments: trunk (7.2-dev) and stable
@@ -37,7 +37,7 @@ use WordPress\Abilities\Settings\Settings_Update;
 use Yoast\PHPUnitPolyfills\TestCases\TestCase;
 
 /**
- * Per-ability contract tests for `wp/settings-update`.
+ * Per-ability contract tests for `core-experimental/settings-update`.
  */
 final class SettingsUpdateTest extends TestCase {
 
@@ -134,10 +134,10 @@ final class SettingsUpdateTest extends TestCase {
 	}
 
 	/**
-	 * The registered `wp/settings-update` ability.
+	 * The registered `core-experimental/settings-update` ability.
 	 */
 	private function get_registered(): WP_Ability {
-		$ability = WP_Abilities_Registry::get_instance()->get_registered( 'wp/settings-update' );
+		$ability = WP_Abilities_Registry::get_instance()->get_registered( 'core-experimental/settings-update' );
 		self::assertNotNull( $ability, 'The ability should be registered through the Registrar.' );
 
 		return $ability;

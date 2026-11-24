@@ -1,6 +1,6 @@
 <?php
 /**
- * Canonical WordPress abilities: `wp/user-create` ability.
+ * Canonical WordPress abilities: `core-experimental/user-create` ability.
  *
  * Ported from WordPress/ai PR #1105 (https://github.com/WordPress/ai/pull/1105) by @jorgefilipecosta.
  *
@@ -13,7 +13,7 @@ namespace WordPress\Abilities\Users;
 use WP_Error;
 
 /**
- * Registers the `wp/user-create` ability, which creates a user. All logic is
+ * Registers the `core-experimental/user-create` ability, which creates a user. All logic is
  * shared with the sibling user write abilities in {@see Abstract_User_Write}
  * (which also reuses the `core/users-query` field projection), and this class
  * only wires it into the authoring surface.
@@ -27,7 +27,7 @@ final class User_Create extends Abstract_User_Write {
 	 * @return string
 	 */
 	protected function ability_name(): string {
-		return 'wp/user-create';
+		return 'core-experimental/user-create';
 	}
 
 	/**

@@ -1,10 +1,10 @@
 <?php
 /**
- * Tests: `wp/terms-query` (port of WordPress/ai PR #1099's terms tests, on this
+ * Tests: `core-experimental/terms-query` (port of WordPress/ai PR #1099's terms tests, on this
  * package's per-ability contract shape).
  *
  * Runs under both wp-env matrix environments: trunk (7.2-dev) and stable
- * (6.9/7.1). The `wp/` name is never core-provided, so the package copy
+ * (6.9/7.1). The `core-experimental/` name is never core-provided, so the package copy
  * registers and executes identically on both. The source PR's taxonomy
  * `show_in_abilities` flag is natively absent on every currently supported
  * core (verified: `property_exists( 'WP_Taxonomy', 'show_in_abilities' )` is
@@ -35,7 +35,7 @@ use WordPress\Abilities\Terms\Terms_Query;
 use Yoast\PHPUnitPolyfills\TestCases\TestCase;
 
 /**
- * Per-ability contract tests for `wp/terms-query`.
+ * Per-ability contract tests for `core-experimental/terms-query`.
  */
 final class TermsQueryTest extends TestCase {
 
@@ -89,7 +89,7 @@ final class TermsQueryTest extends TestCase {
 	/**
 	 * Settles the registry as the other ability suites do: registering before
 	 * the boot so the Registrar's preload and category declarations are queued
-	 * in time; the `wp/terms-query` entry requires polyfilled taxonomy exposure
+	 * in time; the `core-experimental/terms-query` entry requires polyfilled taxonomy exposure
 	 * on every currently supported WordPress.
 	 */
 	public static function set_up_before_class(): void {
@@ -141,10 +141,10 @@ final class TermsQueryTest extends TestCase {
 	}
 
 	/**
-	 * The registered `wp/terms-query` instance.
+	 * The registered `core-experimental/terms-query` instance.
 	 */
 	private function get_registered(): WP_Ability {
-		$ability = WP_Abilities_Registry::get_instance()->get_registered( 'wp/terms-query' );
+		$ability = WP_Abilities_Registry::get_instance()->get_registered( 'core-experimental/terms-query' );
 		self::assertNotNull( $ability, 'The ability should be registered through the Registrar.' );
 
 		return $ability;
@@ -160,7 +160,7 @@ final class TermsQueryTest extends TestCase {
 	 * @return mixed The ability result.
 	 */
 	private function query_terms( array $input = array() ) {
-		return wp_get_ability( 'wp/terms-query' )->execute( $input );
+		return wp_get_ability( 'core-experimental/terms-query' )->execute( $input );
 	}
 
 	/**
@@ -362,7 +362,7 @@ final class TermsQueryTest extends TestCase {
 	/**
 	 * Registered exactly once, with the PR's annotations and the experimental provenance.
 	 *
-	 * The `wp/` name is never core-provided, so the package copy registers on both
+	 * The `core-experimental/` name is never core-provided, so the package copy registers on both
 	 * environments and the provenance does not branch.
 	 */
 	public function test_registered_once_with_annotations_and_provenance(): void {
@@ -391,7 +391,7 @@ final class TermsQueryTest extends TestCase {
 		self::assertSame( 'experimental', $meta['stability'] ?? null );
 		self::assertSame( 'wordpress/abilities', $meta['source'] ?? null );
 		self::assertSame( Manifest::VERSION, $meta['package_version'] ?? null );
-		self::assertArrayNotHasKey( 'renamed_from', $meta, 'The port carries no renamed_from lineage.' );
+		self::assertSame( 'wp/terms-query', $meta['renamed_from'] ?? null, 'The port carries the core-experimental rename lineage.' );
 
 		Registrar::register_all();
 		Registrar::register_all();
@@ -1622,7 +1622,7 @@ final class TermsQueryTest extends TestCase {
 
 		$this->log_in_as( 'subscriber' );
 
-		$route   = '/wp-abilities/v1/abilities/wp/terms-query/run';
+		$route   = '/wp-abilities/v1/abilities/core-experimental/terms-query/run';
 		$request = new \WP_REST_Request( 'GET', $route );
 		$request->set_query_params(
 			array(

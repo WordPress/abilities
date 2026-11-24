@@ -1,6 +1,6 @@
 <?php
 /**
- * Canonical WordPress abilities: `wp/term-update` ability.
+ * Canonical WordPress abilities: `core-experimental/term-update` ability.
  *
  * Ported from WordPress/ai PR #1103 (https://github.com/WordPress/ai/pull/1103) by @jorgefilipecosta.
  *
@@ -13,8 +13,8 @@ namespace WordPress\Abilities\Terms;
 use WP_Error;
 
 /**
- * Registers the `wp/term-update` ability, which updates a term by ID and answers with it
- * through the `wp/terms-query` field projection. All logic is shared with the sibling
+ * Registers the `core-experimental/term-update` ability, which updates a term by ID and answers with it
+ * through the `core-experimental/terms-query` field projection. All logic is shared with the sibling
  * term write abilities in {@see Abstract_Term_Write}, and this class only wires it into
  * the authoring surface.
  *
@@ -28,7 +28,7 @@ final class Term_Update extends Abstract_Term_Write {
 	 * @return string
 	 */
 	protected function ability_name(): string {
-		return 'wp/term-update';
+		return 'core-experimental/term-update';
 	}
 
 	/**
@@ -70,7 +70,7 @@ final class Term_Update extends Abstract_Term_Write {
 	}
 
 	/**
-	 * The output JSON Schema: the updated term, in the `wp/terms-query` projection.
+	 * The output JSON Schema: the updated term, in the `core-experimental/terms-query` projection.
 	 *
 	 * @return array<string, mixed> The output JSON Schema.
 	 */

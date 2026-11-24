@@ -1,6 +1,6 @@
 <?php
 /**
- * Canonical WordPress abilities: `wp/user-update` ability.
+ * Canonical WordPress abilities: `core-experimental/user-update` ability.
  *
  * Ported from WordPress/ai PR #1105 (https://github.com/WordPress/ai/pull/1105) by @jorgefilipecosta.
  *
@@ -13,7 +13,7 @@ namespace WordPress\Abilities\Users;
 use WP_Error;
 
 /**
- * Registers the `wp/user-update` ability, which updates a user by ID. All
+ * Registers the `core-experimental/user-update` ability, which updates a user by ID. All
  * logic is shared with the sibling user write abilities in
  * {@see Abstract_User_Write} (which also reuses the `core/users-query` field
  * projection), and this class only wires it into the authoring surface.
@@ -27,7 +27,7 @@ final class User_Update extends Abstract_User_Write {
 	 * @return string
 	 */
 	protected function ability_name(): string {
-		return 'wp/user-update';
+		return 'core-experimental/user-update';
 	}
 
 	/**
