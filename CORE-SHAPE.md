@@ -832,12 +832,12 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
 
 ### `core/settings-update`
 
-- A `null` value deletes the stored value of a setting, which then reads as its default when it has one. This is why the ability is `destructive`.
+- A `null` value resets a setting to its default, and stores the default so requests that do not register the setting read it too. A setting without a default has its stored value deleted, which is why the ability is `destructive`.
 - The ability is not `idempotent`: repeating a `null` value can fail. For a setting without a default, the second call finds no stored value left to delete.
 - A value that matches the schema but that the setting cannot use is refused with `settings_invalid_value`, and nothing is saved. This covers an unknown `timezone`, a `language` that is not installed, an unknown `default_post_format`, a page setting that is not 0 or the ID of a page, and a `default_category` that is not the ID of a category. The error data maps each refused setting to its message under `params`.
 - The site address (`url`) and the administration email address (`email`) are read-only: `core/settings-get` returns them, but they are left out of the input, under whatever name a plugin exposes them. Settings > General only changes the administration email address after the new address confirms it.
 
-**Example 1:** a title, a reading option and a deleted option
+**Example 1:** a title, a reading option and an option reset to its default
 
 ```jsonc
 // Input
