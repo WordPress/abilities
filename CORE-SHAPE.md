@@ -834,7 +834,8 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
 
 - A `null` value deletes the stored value of a setting, which then reads as its default when it has one. This is why the ability is `destructive`.
 - The ability is not `idempotent`: repeating a `null` value can fail. For a setting without a default, the second call finds no stored value left to delete.
-- A value that matches the schema but that the setting cannot use is refused with `settings_invalid_value`, and nothing is saved. This covers an unknown `timezone`, a `language` that is not installed, an unknown `default_post_format`, a page setting that is not 0 or the ID of a page, and a `default_category` that is not the ID of a category.
+- A value that matches the schema but that the setting cannot use is refused with `settings_invalid_value`, and nothing is saved. This covers an unknown `timezone`, a `language` that is not installed, an unknown `default_post_format`, a page setting that is not 0 or the ID of a page, and a `default_category` that is not the ID of a category. The error data maps each refused setting to its message under `params`.
+- The site address (`url`) and the administration email address (`email`) are read-only: `core/settings-get` returns them, but they are left out of the input, under whatever name a plugin exposes them. Settings > General only changes the administration email address after the new address confirms it.
 
 **Example 1:** a title, a reading option and a deleted option
 
@@ -888,6 +889,26 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
 }
 ```
 
+**Example 5:** several values the settings cannot use
+
+```jsonc
+// Input
+{ "data": { "timezone": "Mars/Olympus", "language": "xx_XX" } }
+
+// Error
+{
+  "code": "settings_invalid_value",
+  "message": "Invalid parameter(s): data[timezone], data[language]",
+  "data": {
+    "status": 400,
+    "params": {
+      "data[timezone]": "The timezone you have entered is not valid. Please select a valid timezone.",
+      "data[language]": "The language is not installed."
+    }
+  }
+}
+```
+
 <details>
 <summary><b>Input schema</b></summary>
 
@@ -904,8 +925,6 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
       "properties": {
         "title": { "type": [ "string", "null" ] },
         "description": { "type": [ "string", "null" ] },
-        "url": { "type": [ "string", "null" ], "format": "uri" },
-        "email": { "type": [ "string", "null" ], "format": "email" },
         "timezone": { "type": [ "string", "null" ] },
         "date_format": { "type": [ "string", "null" ] },
         "time_format": { "type": [ "string", "null" ] },
@@ -942,8 +961,6 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
   "properties": {
     "title":                   { "type": "string" },
     "description":             { "type": "string" },
-    "url":                     { "type": "string", "format": "uri" },
-    "email":                   { "type": "string", "format": "email" },
     "timezone":                { "type": "string" },
     "date_format":             { "type": "string" },
     "time_format":             { "type": "string" },
