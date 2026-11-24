@@ -8,18 +8,18 @@ integrations — for good.
 
 | Prefix | Tier | Meaning | Promises |
 |---|---|---|---|
-| `wp/` | experimental | Incubation. Where **all** new abilities — including every write ability — start. | **None.** Name AND schema may change or vanish in any release. |
+| `core-experimental/` | experimental | Incubation. Where **all** new abilities — including every write ability — start. | **None.** Name AND schema may change or vanish in any release. |
 | `core/` | stable | Core-destined. Adopted **at proposal filing**, after iteration is done. From then on it is frozen: schema backwards compatibility applies immediately. | Semver applies. |
 | `wordpress/` | stable | Package-owned, not core-destined. Rare. | Semver applies. |
 | *(tier flips to)* — | core | Landed in actual core. The package copy is a **backport only**, mechanically generated, and never diverges from core's implementation. | Identical to core's. |
 
 ### Promotion path
 
-Iteration happens under `wp/`; landing in core is a mechanical pipeline, not a
-rewrite. Worked example, `wp/post-update` (a planned write ability, not yet
+Iteration happens under `core-experimental/`; landing in core is a mechanical pipeline, not a
+rewrite. Worked example, `core-experimental/post-update` (a planned write ability, not yet
 shipped):
 
-1. **Incubate:** `wp/post-update` iterates and gets tested through the MCP
+1. **Incubate:** `core-experimental/post-update` iterates and gets tested through the MCP
    adapter against real tasks. Names and schema may still change freely.
 2. **Ready:** file the core proposal (a trac ticket or GitHub issue).
 3. **Same release:** rename to `core/post-update` — tier becomes `stable`,
@@ -49,7 +49,7 @@ Reviewers **reject alias PRs** — see [CONTRIBUTING.md](CONTRIBUTING.md).
 Backwards-compatibility promises are **per-ability-tier, not
 per-package-version**:
 
-- Removing or changing an experimental (`wp/`) ability or its schema is fine
+- Removing or changing an experimental (`core-experimental/`) ability or its schema is fine
   in any release; it is documented as a CHANGELOG breaking-for-experimental
   entry.
 - Breaking changes to `stable` (`core/`, `wordpress/`) or `core` tier
@@ -61,7 +61,7 @@ per-package-version**:
 
 Tier/prefix rules are machine-checked, not aspirational: `ManifestTest` and
 `composer run verify:manifest` enforce that experimental names start with
-`wp/` (and neither `core/` nor `wordpress/`), stable names start with `core/`
+`core-experimental/` (and neither `core/` nor `wordpress/`), stable names start with `core/`
 or `wordpress/`, `core`-tier entries have `core_since` and a `proposal` set,
 `core/`-prefix stable entries have a `proposal`, names are unique,
 `renamed_from` never collides with a live name, and every `class` exists and
