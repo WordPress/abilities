@@ -834,6 +834,7 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
 
 - A `null` value deletes the stored value of a setting, which then reads as its default when it has one. This is why the ability is `destructive`.
 - The ability is not `idempotent`: repeating a `null` value can fail. For a setting without a default, the second call finds no stored value left to delete.
+- A value that matches the schema but that the setting cannot use is refused with `settings_invalid_value`, and nothing is saved. This covers an unknown `timezone`, a `language` that is not installed, an unknown `default_post_format`, a page setting that is not 0 or the ID of a page, and a `default_category` that is not the ID of a category.
 
 **Example 1:** a title, a reading option and a deleted option
 
@@ -870,6 +871,20 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
   "code": "settings_invalid_stored_value",
   "message": "The posts_per_page property has an invalid stored value, and cannot be updated to null.",
   "data": { "status": 500 }
+}
+```
+
+**Example 4:** a front page that does not exist
+
+```jsonc
+// Input
+{ "data": { "show_on_front": "page", "page_on_front": 999999 } }
+
+// Error
+{
+  "code": "settings_invalid_value",
+  "message": "Invalid page ID.",
+  "data": { "status": 400, "params": { "data[page_on_front]": "Invalid page ID." } }
 }
 ```
 
