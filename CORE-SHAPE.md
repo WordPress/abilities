@@ -23,6 +23,8 @@ This document is the source of truth for the shape of the core abilities: their 
 | [`core/term-update`](#coreterm-update) | Proposed | content | `false` | `false` | `true` | `POST` |
 | [`core/term-delete`](#coreterm-delete) | Proposed | content | `false` | `true` | `true` | `DELETE` |
 
+`destructive` is `true` for an ability that removes something: the four `delete` abilities, which remove an entity, and `core/settings-update`, where a `null` value deletes the stored value of a setting without a default. A `create` or any other `update` is `false`, although an update overwrites the values it is given and can have a wide effect, such as a new role in `core/user-update`. This is narrower than the definition in core, where `false` means "only additive updates". The reason is the REST method: `destructive` and `idempotent` together make the method `DELETE`, so an idempotent update marked destructive would have to be called with `DELETE`. `core/settings-update` and `core/user-delete` are not idempotent, so their method is `POST`.
+
 Errors are `WP_Error` objects. The `// Error` part of an example shows one as the REST response body (`code`, `message`, `data`); errors are not validated against the output schema.
 
 ## Content abilities
@@ -30,7 +32,9 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
 ### `core/content-query`
 
 - Default `fields`: `id, type, status, date, slug, title.rendered`.
+- `where.author` filters by the user's `id` or `slug`. There is no filter by `name` on purpose: a display name does not identify a user. The output `author` has all three: `id`, `name` and `slug`.
 - Trashed posts cannot be read today: `where.status` has no `trash` value. It gets one when `core/content-delete` is added.
+- A post's terms and featured image cannot be read today: the output has no `terms` or `featured_media`. It gets both, in `fields` too, when `core/content-create` is added.
 
 **Example 1:** the drafts of the `post` type with chosen fields
 
@@ -273,7 +277,13 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
 ### `core/content-create`
 
 - Default `fields`: `id, type, status, date, slug, title.rendered`.
-- `data.date` takes `site`, `gmt` or both; `site` wins when both are sent.
+- `data.author` takes a user ID, as `core/users-query` returns it. The output `author` is an object with `id`, `name` and `slug`.
+- `data.date` takes `site`, `gmt` or both; `site` wins when both are sent. The offset is optional, and the value is read as the REST API reads `date` and `date_gmt`:
+  - With an offset, such as `2026-10-21T09:30:00+01:00` or `2026-10-21T08:30:00Z`, the value is that moment, in `site` and in `gmt` alike.
+  - Without an offset, such as `2026-10-21T09:30:00`, the value is site time in `site` and UTC in `gmt` (example 4).
+  - The output always has the offset.
+- `data.terms` takes term IDs by taxonomy, as `core/terms-query` returns them. A taxonomy the post type does not use is refused like `parent` in example 5.
+- `data.featured_media` takes the ID of an image, as `core/media-query` and `core/media-upload` return it.
 
 **Example 1:** a draft with the default fields
 
@@ -319,7 +329,54 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
 }
 ```
 
-**Example 3:** an attribute the post type does not support
+**Example 3:** a post with categories, a tag and a featured image
+
+```jsonc
+// Input
+{
+  "data": {
+    "type": "post",
+    "title": "Beta opens today",
+    "status": "publish",
+    "terms": { "category": [ 3, 9 ], "post_tag": [ 15 ] },
+    "featured_media": 310
+  },
+  "fields": [ "status", "slug", "terms", "featured_media" ]
+}
+
+// Output
+{
+  "id": 127,
+  "status": "publish",
+  "slug": "beta-opens-today",
+  "terms": { "category": [ 3, 9 ], "post_tag": [ 15 ] },
+  "featured_media": 310
+}
+```
+
+**Example 4:** a post scheduled for 09:00 in the site's time, with no offset in the date
+
+```jsonc
+// Input
+{
+  "data": {
+    "type": "post",
+    "title": "Beta closes today",
+    "status": "future",
+    "date": { "site": "2026-10-23T09:00:00" }
+  },
+  "fields": [ "status", "date" ]
+}
+
+// Output
+{
+  "id": 128,
+  "status": "future",
+  "date": { "site": "2026-10-23T09:00:00+01:00", "gmt": "2026-10-23T08:00:00+00:00" }
+}
+```
+
+**Example 5:** an attribute the post type does not support
 
 ```jsonc
 // Input
@@ -366,7 +423,25 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
           }
         },
         "author": { "type": "integer", "minimum": 1 },
-        "parent": { "type": "integer", "minimum": 0 }
+        "parent": { "type": "integer", "minimum": 0 },
+        "terms": {
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "properties": {
+            "category": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "type": "integer", "minimum": 1 }
+            },
+            "post_tag": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "type": "integer", "minimum": 1 }
+            }
+          }
+        },
+        "featured_media": { "type": "integer", "minimum": 0 }
       }
     },
     "fields": {
@@ -379,7 +454,7 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
           "modified.gmt", "slug", "link", "title", "title.raw", "title.rendered", "excerpt",
           "excerpt.raw", "excerpt.rendered", "excerpt.protected", "content", "content.raw",
           "content.rendered", "content.protected", "author", "author.id", "author.name",
-          "author.slug", "parent"
+          "author.slug", "parent", "terms", "terms.category", "terms.post_tag", "featured_media"
         ]
       }
     }
@@ -454,7 +529,16 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
         "slug": { "type": [ "string", "null" ] }
       }
     },
-    "parent": { "type": "integer" }
+    "parent": { "type": "integer" },
+    "terms": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "category": { "type": "array", "items": { "type": "integer" } },
+        "post_tag": { "type": "array", "items": { "type": "integer" } }
+      }
+    },
+    "featured_media": { "type": "integer" }
   }
 }
 ```
@@ -464,7 +548,12 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
 ### `core/content-update`
 
 - Default `fields`: `id, type, status, date, slug, title.rendered`.
-- `data.date` takes `site`, `gmt` or both; `site` wins when both are sent.
+- `data.author` takes a user ID, as `core/users-query` returns it. The output `author` is an object with `id`, `name` and `slug`.
+- `data.date` takes `site`, `gmt` or both; `site` wins when both are sent. The offset is optional: without one the value is site time in `site` and UTC in `gmt`, as in `core/content-create`.
+- `data.terms` replaces the post's terms in each taxonomy it names, and an empty list removes them; a taxonomy left out keeps its terms.
+- `data.featured_media` takes the ID of an image; `0` removes the featured image.
+- A trashed post is restored by sending `data.status`: it leaves the trash with that status and gets its slug back. Without `data.status` it stays in the trash.
+- The comments that went to the trash with the post come back with it, each with the status it had before, as "Restore" does on the Posts screen. This goes beyond the REST posts endpoint, which restores the post and leaves those comments hidden, in the `post-trashed` status.
 
 **Example 1:** a new title and excerpt
 
@@ -508,7 +597,39 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
 }
 ```
 
-**Example 3:** a post the user cannot edit
+**Example 3:** new tags and no featured image, with the categories left as they are
+
+```jsonc
+// Input
+{
+  "where": { "type": "post", "id": 127 },
+  "data": { "terms": { "post_tag": [ 15, 16 ] }, "featured_media": 0 },
+  "fields": [ "terms", "featured_media" ]
+}
+
+// Output
+{
+  "id": 127,
+  "terms": { "category": [ 3, 9 ], "post_tag": [ 15, 16 ] },
+  "featured_media": 0
+}
+```
+
+**Example 4:** restoring a post from the trash as a draft
+
+```jsonc
+// Input
+{
+  "where": { "type": "post", "id": 123 },
+  "data": { "status": "draft" },
+  "fields": [ "status", "slug" ]
+}
+
+// Output
+{ "id": 123, "status": "draft", "slug": "launch-notes-updated" }
+```
+
+**Example 5:** a post the user cannot edit
 
 ```jsonc
 // Input
@@ -563,7 +684,25 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
           }
         },
         "author": { "type": "integer", "minimum": 1 },
-        "parent": { "type": "integer", "minimum": 0 }
+        "parent": { "type": "integer", "minimum": 0 },
+        "terms": {
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "properties": {
+            "category": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "type": "integer", "minimum": 1 }
+            },
+            "post_tag": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "type": "integer", "minimum": 1 }
+            }
+          }
+        },
+        "featured_media": { "type": "integer", "minimum": 0 }
       }
     },
     "fields": {
@@ -576,7 +715,7 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
           "modified.gmt", "slug", "link", "title", "title.raw", "title.rendered", "excerpt",
           "excerpt.raw", "excerpt.rendered", "excerpt.protected", "content", "content.raw",
           "content.rendered", "content.protected", "author", "author.id", "author.name",
-          "author.slug", "parent"
+          "author.slug", "parent", "terms", "terms.category", "terms.post_tag", "featured_media"
         ]
       }
     }
@@ -651,7 +790,16 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
         "slug": { "type": [ "string", "null" ] }
       }
     },
-    "parent": { "type": "integer" }
+    "parent": { "type": "integer" },
+    "terms": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "category": { "type": "array", "items": { "type": "integer" } },
+        "post_tag": { "type": "array", "items": { "type": "integer" } }
+      }
+    },
+    "featured_media": { "type": "integer" }
   }
 }
 ```
@@ -661,6 +809,8 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
 ### `core/content-delete`
 
 - When this ability is added, `core/content-query` takes `trash` in `where.status`, so trashed posts can be read.
+- A trashed post is restored with `core/content-update`, by sending `data.status`. With `permanent: true` it is deleted for good.
+- The post's comments go to the trash with it, and come back with it when it is restored.
 
 **Example 1:** trashing a post
 
@@ -732,7 +882,9 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
   "type": "object",
   "additionalProperties": false,
   "required": [ "outcome" ],
-  "properties": { "outcome": { "type": "string" } }
+  "properties": {
+    "outcome": { "type": "string", "enum": [ "trashed", "deleted" ] }
+  }
 }
 ```
 
@@ -1563,6 +1715,9 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
 ### `core/media-query`
 
 - Default `fields`: `id, status, date, slug, title.rendered, media_type, mime_type, source_url`.
+- `where.author` filters by the user's `id` or `slug`. There is no filter by `name` on purpose: a display name does not identify a user. The output `author` has all three: `id`, `name` and `slug`.
+- `media_type` in the output is the part of `mime_type` before the slash, the vocabulary `where.media_type` filters by: `image/jpeg` gives `image` and `application/pdf` gives `application`. It is a plain string and not the filter's enum, because an attachment can have a type that can no longer be uploaded, or no type at all, which gives an empty string.
+- `source_url` is `null` when WordPress has no URL for the file, which happens when no file is recorded for the attachment. It is never an empty string. A size that has no URL is left out of `media_details.sizes`.
 
 **Example 1:** the images attached to post 123 with chosen fields
 
@@ -1615,7 +1770,7 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
       "date": { "site": "2026-10-20T16:00:00+01:00", "gmt": "2026-10-20T15:00:00+00:00" },
       "slug": "press-kit",
       "title": { "rendered": "Press kit" },
-      "media_type": "file",
+      "media_type": "application",
       "mime_type": "application/pdf",
       "source_url": "https://example.test/wp-content/uploads/2026/10/press-kit.pdf"
     }
@@ -1791,7 +1946,7 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
           "alt_text":   { "type": "string" },
           "media_type": { "type": "string" },
           "mime_type":  { "type": "string" },
-          "source_url": { "type": "string", "format": "uri" },
+          "source_url": { "type": [ "string", "null" ], "format": "uri" },
           "filename":   { "type": "string" },
           "filesize":   { "type": "integer" },
           "media_details": {
@@ -1848,7 +2003,9 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
 ### `core/media-upload`
 
 - Default `fields`: `id, status, date, slug, title.rendered, media_type, mime_type, source_url`.
-- `data.date` takes `site`, `gmt` or both; `site` wins when both are sent.
+- `data.author` takes a user ID, as `core/users-query` returns it. The output `author` is an object with `id`, `name` and `slug`.
+- `data.date` takes `site`, `gmt` or both; `site` wins when both are sent. The offset is optional: without one the value is site time in `site` and UTC in `gmt`, as in `core/content-create`.
+- `source_url` has the type it has in `core/media-query`, where it can be `null`. After an upload it is always a URL.
 
 **Example 1:** an image from a URL, attached to post 123
 
@@ -1917,7 +2074,7 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
   "date": { "site": "2026-10-20T16:00:00+01:00", "gmt": "2026-10-20T15:00:00+00:00" },
   "slug": "press-kit",
   "title": { "rendered": "Press kit" },
-  "media_type": "file",
+  "media_type": "application",
   "mime_type": "application/pdf",
   "source_url": "https://example.test/wp-content/uploads/2026/10/press-kit.pdf"
 }
@@ -2069,7 +2226,7 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
     "alt_text":   { "type": "string" },
     "media_type": { "type": "string" },
     "mime_type":  { "type": "string" },
-    "source_url": { "type": "string", "format": "uri" },
+    "source_url": { "type": [ "string", "null" ], "format": "uri" },
     "filename":   { "type": "string" },
     "filesize":   { "type": "integer" },
     "media_details": {
@@ -2114,7 +2271,10 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
 ### `core/media-update`
 
 - Default `fields`: `id, status, date, slug, title.rendered, media_type, mime_type, source_url`.
-- `data.date` takes `site`, `gmt` or both; `site` wins when both are sent.
+- `data.author` takes a user ID, as `core/users-query` returns it. The output `author` is an object with `id`, `name` and `slug`.
+- `data.date` takes `site`, `gmt` or both; `site` wins when both are sent. The offset is optional: without one the value is site time in `site` and UTC in `gmt`, as in `core/content-create`.
+- `source_url` is `null` when WordPress has no URL for the file, as in `core/media-query`.
+- `data` has no `status`, so this ability cannot restore an attachment from the trash (see `core/media-delete`).
 
 **Example 1:** a caption and a new alt text
 
@@ -2274,7 +2434,7 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
     "alt_text":   { "type": "string" },
     "media_type": { "type": "string" },
     "mime_type":  { "type": "string" },
-    "source_url": { "type": "string", "format": "uri" },
+    "source_url": { "type": [ "string", "null" ], "format": "uri" },
     "filename":   { "type": "string" },
     "filesize":   { "type": "integer" },
     "media_details": {
@@ -2319,6 +2479,7 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
 ### `core/media-delete`
 
 - When `MEDIA_TRASH` is off, which is the default, `permanent: true` is required: an attachment cannot be trashed there, only deleted.
+- When `MEDIA_TRASH` is on, an attachment goes to the trash unless `permanent` is `true`. No ability restores it from there: `core/media-update` has no `status`, unlike `core/content-update`. It is restored on the Media Library screen.
 
 **Example 1:** a permanent deletion
 
@@ -2377,7 +2538,9 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
   "type": "object",
   "additionalProperties": false,
   "required": [ "outcome" ],
-  "properties": { "outcome": { "type": "string" } }
+  "properties": {
+    "outcome": { "type": "string", "enum": [ "trashed", "deleted" ] }
+  }
 }
 ```
 
@@ -2548,6 +2711,7 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
 ### `core/term-create`
 
 - Default `fields`: `id, taxonomy, name, slug, link`.
+- A name already used under the same parent is refused with `term_exists`. The error names the input at fault in `data.params`, as `user_exists` does, and gives the existing term in `data.term_id` (example 3).
 
 **Example 1:** a child category under News
 
@@ -2591,7 +2755,11 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
 {
   "code": "term_exists",
   "message": "A term with the name provided already exists with this parent.",
-  "data": { "status": 400, "term_id": 9 }
+  "data": {
+    "status": 400,
+    "term_id": 9,
+    "params": { "data[name]": "A term with the name provided already exists with this parent." }
+  }
 }
 ```
 
@@ -2831,7 +2999,9 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
   "type": "object",
   "additionalProperties": false,
   "required": [ "outcome" ],
-  "properties": { "outcome": { "type": "string" } }
+  "properties": {
+    "outcome": { "type": "string", "enum": [ "deleted" ] }
+  }
 }
 ```
 
