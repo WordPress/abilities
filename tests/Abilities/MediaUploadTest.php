@@ -895,7 +895,7 @@ final class MediaUploadTest extends TestCase {
 		);
 		$fields = array( 'date', 'date_gmt', 'status', 'title_raw', 'title_rendered', 'author', 'description_raw', 'caption_raw', 'caption_rendered', 'alt_text', 'media_type', 'mime_type', 'post' );
 
-		$request = new WP_REST_Request( 'POST', '/core-experimental/v2/media' );
+		$request = new WP_REST_Request( 'POST', '/wp/v2/media' );
 		$request->set_header( 'Content-Type', 'image/jpeg' );
 		$request->set_header( 'Content-Disposition', 'attachment; filename=canola.jpg' );
 		$request->set_body( (string) file_get_contents( (string) constant( 'DIR_TESTDATA' ) . '/images/canola.jpg' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reads a local test file.
