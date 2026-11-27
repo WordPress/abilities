@@ -284,7 +284,7 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
   - The output always has the offset.
 - `data.terms` takes term IDs by taxonomy, as `core/terms-query` returns them. A taxonomy the post type does not use is refused like `parent` in example 5.
 - `data.featured_media` takes the ID of an image, as `core/media-query` and `core/media-upload` return it.
-- A `data.status` that makes the post visible needs `publish_posts`, and a `data.author` other than the current user needs `edit_others_posts`. The permission callback checks both, so the refusal is the generic permission error, as in example 5 of `core/content-update`.
+- A `data.status` that makes the post visible needs `publish_posts`, and a `data.author` other than the current user needs `edit_others_posts`. A `data.slug` on a post that will be `pending` also needs `publish_posts`. A `data.parent` must be a post the current user can read, of a type exposed to abilities; a missing post is refused the same way, so the refusal never tells whether a post exists. The permission callback checks all of these, so the refusal is the generic permission error, as in example 5 of `core/content-update`. A parent of another type, or one that would make a loop, is refused as an invalid `data[parent]`.
 
 **Example 1:** a draft with the default fields
 
@@ -554,7 +554,7 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
 - `data.terms` replaces the post's terms in each taxonomy it names, and an empty list removes them; a taxonomy left out keeps its terms.
 - `data.featured_media` takes the ID of an image; `0` removes the featured image.
 - `data.slug` may be the stored slug, also the empty slug of a draft, so a post from `core/content-query` can be sent back as it is. Any other slug that is empty once sanitized is refused.
-- The permission callback checks `edit_post` on the post, and the `data.status` and `data.author` capabilities as `core/content-create` does, so every permission refusal is the generic permission error (example 5). A direct `WP_Ability::execute()` call gets `ability_invalid_permissions` instead.
+- The permission callback checks `edit_post` on the post, and the `data.status`, `data.author`, `data.parent` and `data.slug` rules as `core/content-create` does, with `publish_post` on the post for the slug of a pending post. A value that keeps the stored one needs none of these. So every permission refusal is the generic permission error (example 5). A direct `WP_Ability::execute()` call gets `ability_invalid_permissions` instead.
 - A trashed post is restored by sending `data.status`: it leaves the trash with that status and gets its slug back. Without `data.status` it stays in the trash.
 - The comments that went to the trash with the post come back with it, each with the status it had before, as "Restore" does on the Posts screen. This goes beyond the REST posts endpoint, which restores the post and leaves those comments hidden, in the `post-trashed` status.
 
