@@ -135,6 +135,9 @@ Full rules, the promotion path, and the rename protocol are in
 
 | Name | Tier | Category | Notes |
 |---|---|---|---|
+| `core/get-site-info` | core | site | Reads site settings, optionally limited to selected fields. Requires `manage_options`. |
+| `core/get-user-info` | core | user | Reads the signed-in user's own profile. The 6.9 package copy is excluded from REST. |
+| `core/get-environment-info` | core | site | Reads the runtime and database versions and the WordPress environment type. Requires `manage_options`. |
 | `core/content-query` | core | content | Backport of the readonly content query ability landed in WordPress core 7.2 (`core_since: 7.2`). On 7.2+ core provides it and the Registrar skips it; on 6.9–7.1 the package serves it under the same name. Requires the `show_in_abilities` support feature (polyfilled where core lacks it). |
 | `core/settings-get` | core | site | Backport of the readonly settings get ability landed in WordPress core 7.2 (`core_since: 7.2`). On 7.2+ core provides it and the Registrar skips it; on 6.9–7.1 the package serves it under the same name. Requires the `setting_show_in_abilities` support feature (polyfilled where core lacks it: core's own settings are flagged and registered before the ability reads them, as on 7.2). |
 | `core/users-query` | core | user | Backport of the readonly users query ability landed in WordPress core 7.2 (`core_since: 7.2`). On 7.2+ core provides it and the Registrar skips it; on 6.9–7.1 the package serves it under the same name. Needs no support feature beyond the Abilities API. |

@@ -136,6 +136,33 @@ const INLINE_HELPERS = array( 'parse_filter_int', 'parse_list_input', 'get_input
  * - category / requires / proposal: the reverse manifest entry skeleton.
  */
 const PROFILES = array(
+	'core/get-site-info' => array(
+		'fixture'    => 'tests/Fixtures/abilities-api/6.9/get-site-info.php',
+		'package'    => 'src/Info/Get_Site_Info.php',
+		'procedural' => true,
+		'core_since' => '6.9',
+		'category'   => 'site',
+		'requires'   => array(),
+		'proposal'   => 'https://core.trac.wordpress.org/ticket/64146',
+	),
+	'core/get-user-info' => array(
+		'fixture'    => 'tests/Fixtures/abilities-api/6.9/get-user-info.php',
+		'package'    => 'src/Info/Get_User_Info.php',
+		'procedural' => true,
+		'core_since' => '6.9',
+		'category'   => 'user',
+		'requires'   => array(),
+		'proposal'   => 'https://core.trac.wordpress.org/ticket/64146',
+	),
+	'core/get-environment-info' => array(
+		'fixture'    => 'tests/Fixtures/abilities-api/6.9/get-environment-info.php',
+		'package'    => 'src/Info/Get_Environment_Info.php',
+		'procedural' => true,
+		'core_since' => '6.9',
+		'category'   => 'site',
+		'requires'   => array(),
+		'proposal'   => 'https://core.trac.wordpress.org/ticket/64146',
+	),
 	'core/content-query' => array(
 		'fixture'       => 'tests/Fixtures/abilities-api/abilities/class-wp-abilities-content.php',
 		'package'       => 'src/Content/Content_Query.php',
@@ -1008,6 +1035,9 @@ function transform_forward( string $pkgText, string $absText ): string {
 
 	$abname = unquote( return_expr( $tokens, $by['ability_name'] ) );
 	$prof = profile( $abname );
+	if ( ! empty( $prof['procedural'] ) ) {
+		return forward_procedural_registration( $tokens, $by, $abname );
+	}
 	list( $dir, $pkgClass, $coreClass, $regMethod ) = slug_parts( $abname );
 	if ( $cls['name'] !== $pkgClass ) {
 		fail( 'unexpected class name ' . $cls['name'] . ' for ability ' . $abname . ' (expected ' . $pkgClass . ')' );
@@ -1460,13 +1490,77 @@ function parse_registration( array $tokens, array $stmt ): array {
 		$entries[ $key ] = span_trim( $tokens, $arrow + 1, $vend );
 		$i = $vend + 2; // skip ','
 	}
-	return array( $abname, $entries );
+	return array( $abname, $entries, span_text( $tokens, $arrTok, $close ) );
+}
+
+/** Procedural fixtures begin with local setup or the registration call itself. */
+function is_procedural_registration( array $tokens ): bool {
+	$first = next_meaningful_token( $tokens, 1 );
+	return null !== $first && ( T_VARIABLE === $tokens[ $first ][0] || 'wp_register_ability' === $tokens[ $first ][1] );
+}
+
+/** Split an original procedural registration into its setup, name and argument array. */
+function procedural_registration( array $tokens ): array {
+	$setup = split_statements( $tokens, 1, count( $tokens ) - 1 );
+	$call = array_pop( $setup );
+	$call !== null || fail( 'missing procedural registration' );
+	list( $name, , $values ) = parse_registration( $tokens, $call );
+	return array( $name, $setup, $values );
+}
+
+/** Turn the selected 6.9 registration into a package class without splitting closure scope. */
+function reverse_procedural_registration( array $tokens ): string {
+	list( $name, $setup, $values ) = procedural_registration( $tokens );
+	$prof = profile( $name );
+	$class = basename( $prof['package'], '.php' );
+	$body = '';
+	foreach ( $setup as $statement ) {
+		$body .= "\t\t" . reindent( stmt_text( $tokens, $statement ), 2 ) . "\n";
+	}
+	$body .= "\t\treturn " . reindent( $values, 1 ) . ';';
+	$template = <<<'PHP'
+<?php
+/**
+ * WordPress 6.9 registration for ABILITY_NAME.
+ *
+ * @package WordPress\Abilities
+ */
+
+declare( strict_types = 1 );
+
+namespace WordPress\Abilities\Info;
+
+/** Provides the ABILITY_NAME ability when Core has not registered it. */
+final class CLASS_NAME extends Abstract_Info_Ability {
+	protected function ability_name(): string {
+		return 'ABILITY_NAME';
+	}
+
+	protected function registration_args(): array {
+METHOD_BODY
+	}
+}
+PHP;
+	return strtr( $template, array( 'ABILITY_NAME' => $name, 'CLASS_NAME' => $class, 'METHOD_BODY' => $body ) ) . "\n";
+}
+
+/** Restore the original setup and wp_register_ability() call from the package definition. */
+function forward_procedural_registration( array $tokens, array $by, string $name ): string {
+	$method = $by['registration_args'];
+	$setup = body_statements( $tokens, $method['open'], $method['close'] );
+	$return = array_pop( $setup );
+	$return !== null && T_RETURN === $tokens[ stmt_start( $tokens, $return ) ][0] || fail( 'registration_args() must end with the argument array' );
+	$out = "<?php\n";
+	foreach ( $setup as $statement ) {
+		$out .= reindent( stmt_text( $tokens, $statement ), -2 ) . "\n";
+	}
+	return $out . "wp_register_ability(\n\t'" . $name . "',\n\t" . reindent( return_expr( $tokens, $method ), -1 ) . "\n);\n";
 }
 
 /** Build the manifest entry skeleton print (reverse mode). */
 function build_manifest( string $abname ): string {
 	$prof = profile( $abname );
-	list( $dir, $pkgClass ) = slug_parts( $abname );
+	$packageClass = str_replace( '/', '\\', substr( $prof['package'], 4, -4 ) );
 	$requires = array();
 	foreach ( $prof['requires'] as $feature ) {
 		$requires[] = "'" . $feature . "'";
@@ -1475,17 +1569,17 @@ function build_manifest( string $abname ): string {
 		'=== Manifest entry skeleton (human-verify before applying to src/Manifest.php) ===',
 		"'" . $abname . "' => array(",
 		"\t'name'           => '" . $abname . "',",
-		"\t'class'          => '" . $dir . '\\' . $pkgClass . "',",
+		"\t'class'          => '" . $packageClass . "',",
 		"\t'category'       => '" . $prof['category'] . "',",
 		"\t'tier'           => 'core',",
 		"\t'min_wp_version' => '6.9',",
-		"\t'core_since'     => '7.2',",
+		"\t'core_since'     => '" . ( $prof['core_since'] ?? '7.2' ) . "',",
 		"\t'requires'       => " . ( array() === $requires ? 'array()' : 'array( ' . implode( ', ', $requires ) . ' )' ) . ',',
 		"\t'renamed_from'   => null,",
 		"\t'proposal'       => '" . $prof['proposal'] . "',",
 		"),",
 		'',
-		'Note: tier=core, core_since=7.2 per settled design; category, requires and',
+		'Note: the Core version, category, requirements and',
 		'proposal come from the coreify profile and must match src/Manifest.php.',
 	);
 	return implode( "\n", $lines );
@@ -1576,6 +1670,9 @@ function negate_condition( string $cond ): string {
  */
 function transform_reverse( string $coreText ): string {
 	$tokens = tokenize_source( $coreText );
+	if ( is_procedural_registration( $tokens ) ) {
+		return reverse_procedural_registration( $tokens );
+	}
 	$cls = parse_class( $tokens );
 	$members = parse_members( $tokens, $cls['open'], $cls['close'] );
 	$by = index_by_name( $members );
@@ -1884,6 +1981,10 @@ function write_out( string $path, string $text ): void {
 
 /** Default tools/out paths of an ability: [reverse (package form), forward (core form)]. */
 function out_paths( string $root, string $abname ): array {
+	$prof = profile( $abname );
+	if ( ! empty( $prof['procedural'] ) ) {
+		return array( $root . '/tools/out/' . substr( $prof['package'], 4 ), $root . '/tools/out/' . basename( $prof['fixture'] ) );
+	}
 	list( $dir, $pkgClass, $coreClass ) = slug_parts( $abname );
 	return array(
 		$root . '/tools/out/' . $dir . '/' . $pkgClass . '.php',
@@ -1968,6 +2069,9 @@ function run( array $o ): int {
 /** Ability name alone (for default out paths). */
 function reverse_ability_name( string $coreText ): string {
 	$tokens = tokenize_source( $coreText );
+	if ( is_procedural_registration( $tokens ) ) {
+		return procedural_registration( $tokens )[0];
+	}
 	$cls = parse_class( $tokens );
 	$members = parse_members( $tokens, $cls['open'], $cls['close'] );
 	list( , $stmts, $idx ) = core_registration_method( $tokens, $members );

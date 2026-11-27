@@ -19,6 +19,8 @@ the initial snapshot of the prototype.
 
 ### Added
 
+- Backport the three info abilities introduced in WordPress 6.9. Sites that already register them keep their native implementation.
+
 ### Added
 
 - Repository scaffold and tooling: Composer contract for `wordpress/abilities`
