@@ -657,6 +657,45 @@ final class RegistrarTest extends TestCase {
 	}
 
 	/**
+	 * Check both paths for the original Core info abilities. The standard
+	 * PHPUnit bootstrap unhooks Core registration, so replay it explicitly.
+	 */
+	public function test_core_info_registrations(): void {
+		$names = array( 'core/get-site-info', 'core/get-user-info', 'core/get-environment-info' );
+		$core  = static function (): void {
+			wp_register_core_abilities();
+		};
+
+		self::open_fresh_categories_window();
+		self::open_fresh_init_window();
+		add_action( 'wp_abilities_api_init', $core, 2 );
+		Registrar::register_all();
+		try {
+			WP_Abilities_Registry::get_instance();
+			foreach ( $names as $name ) {
+				$native = wp_get_ability( $name );
+				self::assertInstanceOf( \WP_Ability::class, $native );
+				self::assertNotInstanceOf( Abstract_Core_Ability::class, $native );
+				self::assertTrue( Registrar::register( $name ) );
+				self::assertSame( $native, wp_get_ability( $name ) );
+			}
+		} finally {
+			remove_action( 'wp_abilities_api_init', $core, 2 );
+			self::open_fresh_init_window();
+			Registrar::register_all();
+			WP_Abilities_Registry::get_instance();
+		}
+
+		foreach ( $names as $name ) {
+			$entry   = Manifest::get( $name );
+			$ability = wp_get_ability( $name );
+			self::assertInstanceOf( $entry['class'], $ability );
+			self::assertSame( 'wordpress/abilities', $ability->get_meta_item( 'source' ) );
+			self::assertSame( '6.9', $entry['core_since'] );
+		}
+	}
+
+	/**
 	 * 7. P8: the Gate-8 rejection for a missing ability category is LOUD. When
 	 * `wp_register_ability()` returns null because the ability's category is
 	 * not registered, the Registrar must fire `_doing_it_wrong()` naming that
