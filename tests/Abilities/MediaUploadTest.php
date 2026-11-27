@@ -126,6 +126,11 @@ final class MediaUploadTest extends TestCase {
 		$this->user_ids = array();
 		wp_set_current_user( 0 );
 
+		// The site timezone is not this class's business; a test that set it
+		// must not leak that setting into later tests, even when it fails
+		// mid-method.
+		update_option( 'timezone_string', '' );
+
 		parent::tear_down();
 	}
 
