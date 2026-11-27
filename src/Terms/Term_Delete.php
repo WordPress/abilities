@@ -1,6 +1,6 @@
 <?php
 /**
- * Canonical WordPress abilities: `wp/term-delete` ability.
+ * Canonical WordPress abilities: `core-experimental/term-delete` ability.
  *
  * Ported from WordPress/ai PR #1103 (https://github.com/WordPress/ai/pull/1103) by @jorgefilipecosta.
  *
@@ -13,9 +13,9 @@ namespace WordPress\Abilities\Terms;
 use WP_Error;
 
 /**
- * Registers the `wp/term-delete` ability, which deletes a term by ID. Terms cannot be
+ * Registers the `core-experimental/term-delete` ability, which deletes a term by ID. Terms cannot be
  * trashed, so a delete only runs when `force` is true, and the deleted term returns
- * under `previous` through the `wp/terms-query` field projection. All logic is shared
+ * under `previous` through the `core-experimental/terms-query` field projection. All logic is shared
  * with the sibling term write abilities in {@see Abstract_Term_Write}, and this class
  * only wires it into the authoring surface.
  *
@@ -29,7 +29,7 @@ final class Term_Delete extends Abstract_Term_Write {
 	 * @return string
 	 */
 	protected function ability_name(): string {
-		return 'wp/term-delete';
+		return 'core-experimental/term-delete';
 	}
 
 	/**

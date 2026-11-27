@@ -17,7 +17,22 @@ the initial snapshot of the prototype.
 
 ## [Unreleased]
 
-### Added
+### Changed
+
+- **Breaking (experimental):** Renamed every experimental-tier ability from the
+  `wp/` namespace to `core-experimental/` so the name itself tells consumers
+  the ability is still in development
+  ([issue #18](https://github.com/WordPress/abilities/issues/18)). Every
+  `wp/<name>` became `core-experimental/<name>` — the twelve experimental
+  abilities: `media-query`, `media-upload`, `media-update`, `media-delete`,
+  `settings-update`, `user-create`, `user-update`, `user-delete`,
+  `terms-query`, `term-create`, `term-update`, `term-delete`. Per the rename
+  protocol (NAME-LIFECYCLE.md) the manifest entries record the old name under
+  `renamed_from` (stamped into each ability's `meta.renamed_from`), the old
+  names stop working with the release carrying this change, and no alias
+  period is offered. Tier values and promise levels are unchanged:
+  `core-experimental/` abilities keep the no-promises experimental tier;
+  `core/` and `wordpress/` semantics are untouched.
 
 ### Added
 

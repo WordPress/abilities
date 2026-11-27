@@ -32,7 +32,7 @@ until core decides otherwise:
 - Deletion formats the post before deleting it.
 - `get_post_by_slug` is unreachable via the write schemas — a dead path kept
   for parity with core.
-- `wp/media-query` (WordPress/ai PR #1098):
+- `core-experimental/media-query` (WordPress/ai PR #1098):
   - A status the caller may not query reports `media_invalid_param` (with a
     400 status), not the ability framework's `ability_invalid_permissions` —
     the PR wraps its internal status error in the execute callback.
@@ -48,7 +48,7 @@ until core decides otherwise:
   - With raw fields requested, a collection is answered in the edit context:
     items the caller cannot edit are withheld from the list but still counted
     in the totals.
-- `wp/settings-update` (WordPress/ai PR #764):
+- `core-experimental/settings-update` (WordPress/ai PR #764):
   - All-or-nothing by design (`settings_invalid_param` 400 →
     `settings_cannot_manage_privacy_options` 403 →
     `settings_invalid_stored_value` 500 → writes): an error leaves every
@@ -70,7 +70,7 @@ until core decides otherwise:
     settings endpoint skips the setting without an error.
   - `settings-update` is not registered when every exposed setting is
     read-only (multisite), where the endpoint always exists.
-- `wp/terms-query` (WordPress/ai PR #1099):
+- `core-experimental/terms-query` (WordPress/ai PR #1099):
   - A missing, hidden, or taxonomy-mismatched term is denied like an unreadable
     one — a generic permission denial (no 404 vs 403 distinction), so terms
     cannot be probed through the ability. A direct (unvalidated) call reports
@@ -95,7 +95,7 @@ until core decides otherwise:
     branches of the matrix; a custom taxonomy's non-bool opt-in value (e.g.
     `'yes'`) is not normalized to a bool, which the loose object-list match
     and the ability's truthiness check read exactly like 7.2's bool cast.
-- `wp/media-upload` / `wp/media-update` / `wp/media-delete` (WordPress/ai PR #1104):
+- `core-experimental/media-upload` / `core-experimental/media-update` / `core-experimental/media-delete` (WordPress/ai PR #1104):
   - Trashing an attachment requires the site to enable the media trash
     (`MEDIA_TRASH`): without it, a non-forced delete answers
     `media_trash_not_supported` (501), and `force` string values coerce like
@@ -117,8 +117,8 @@ until core decides otherwise:
   - The delete capability is re-checked right before anything is removed, so
     a hook refusal surfaces as `media_cannot_delete` (500) on the
     `pre_delete_attachment` veto.
-- `wp/term-create` / `wp/term-update` / `wp/term-delete` (WordPress/ai PR #1103):
-  - Terms cannot be trashed, so `wp/term-delete` only deletes with `force`
+- `core-experimental/term-create` / `core-experimental/term-update` / `core-experimental/term-delete` (WordPress/ai PR #1103):
+  - Terms cannot be trashed, so `core-experimental/term-delete` only deletes with `force`
     set to true: a missing or false `force` answers `terms_trash_not_supported`
     (501), and string values coerce like booleans through the delete route's
     query-string input (`"false"` does not delete, `"true"` does).

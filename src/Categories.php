@@ -53,7 +53,7 @@ final class Categories {
 			'description' => 'Abilities that retrieve or manage posts and other content.',
 		),
 		/*
-		 * Package-authored, for the `wp/media-query` port: core trunk registers no
+		 * Package-authored, for the `core-experimental/media-query` port: core trunk registers no
 		 * `media` ability category (wp_register_core_ability_categories() covers
 		 * `site`, `user`, `content`, and `uncategorized`), so there is nothing to
 		 * copy verbatim. Styled like trunk's own registrations; keep it in sync

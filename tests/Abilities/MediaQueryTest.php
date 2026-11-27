@@ -1,10 +1,10 @@
 <?php
 /**
- * Tests: `wp/media-query` (port of WordPress/ai PR #1098's media tests, on this
+ * Tests: `core-experimental/media-query` (port of WordPress/ai PR #1098's media tests, on this
  * package's per-ability contract shape).
  *
  * Runs under both wp-env matrix environments: trunk (7.2-dev) and stable
- * (6.9/7.1). The `wp/` name is never core-provided, so the package copy
+ * (6.9/7.1). The `core-experimental/` name is never core-provided, so the package copy
  * registers and executes identically on both; the suite pins the ported
  * attachment endpoint behaviors — permissions, filters, fields, pagination —
  * and the PR's documented REST deviations.
@@ -27,7 +27,7 @@ use WordPress\Abilities\Registrar;
 use Yoast\PHPUnitPolyfills\TestCases\TestCase;
 
 /**
- * Per-ability contract tests for `wp/media-query`.
+ * Per-ability contract tests for `core-experimental/media-query`.
  */
 final class MediaQueryTest extends TestCase {
 
@@ -113,10 +113,10 @@ final class MediaQueryTest extends TestCase {
 	}
 
 	/**
-	 * The registered `wp/media-query` instance.
+	 * The registered `core-experimental/media-query` instance.
 	 */
 	private function get_registered(): WP_Ability {
-		$ability = WP_Abilities_Registry::get_instance()->get_registered( 'wp/media-query' );
+		$ability = WP_Abilities_Registry::get_instance()->get_registered( 'core-experimental/media-query' );
 		self::assertNotNull( $ability, 'The ability should be registered through the Registrar.' );
 
 		return $ability;
@@ -129,7 +129,7 @@ final class MediaQueryTest extends TestCase {
 	 * @return mixed The ability result.
 	 */
 	private function execute( array $input = array() ) {
-		return wp_get_ability( 'wp/media-query' )->execute( $input );
+		return wp_get_ability( 'core-experimental/media-query' )->execute( $input );
 	}
 
 	/**
@@ -308,7 +308,7 @@ final class MediaQueryTest extends TestCase {
 	/**
 	 * Registered exactly once, with the PR's annotations and the experimental provenance.
 	 *
-	 * The `wp/` name is never core-provided, so the package copy registers on both
+	 * The `core-experimental/` name is never core-provided, so the package copy registers on both
 	 * environments and the provenance does not branch.
 	 */
 	public function test_registered_once_with_annotations_and_provenance(): void {

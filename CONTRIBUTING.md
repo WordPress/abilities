@@ -37,7 +37,7 @@ canonical ability.
 
 Ability names are adopted with a paper trail: a `core/`-prefix or `core`-tier
 ability must link a core trac/GitHub ticket, recorded in its manifest entry's
-`proposal` field. Experimental (`wp/`) abilities don't need one yet; filing
+`proposal` field. Experimental (`core-experimental/`) abilities don't need one yet; filing
 it is part of promotion. Promotions and renames follow the promotion path and
 rename protocol in [NAME-LIFECYCLE.md](NAME-LIFECYCLE.md).
 

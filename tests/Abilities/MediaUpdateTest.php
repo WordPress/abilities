@@ -1,6 +1,6 @@
 <?php
 /**
- * Tests: `wp/media-update` (port of WordPress/ai PR #1104's update tests, on
+ * Tests: `core-experimental/media-update` (port of WordPress/ai PR #1104's update tests, on
  * this package's per-ability contract shape).
  *
  * Runs under both wp-env matrix environments: trunk (7.2-dev) and stable
@@ -25,7 +25,7 @@ use WordPress\Abilities\Registrar;
 use Yoast\PHPUnitPolyfills\TestCases\TestCase;
 
 /**
- * Contract tests for `wp/media-update`.
+ * Contract tests for `core-experimental/media-update`.
  */
 final class MediaUpdateTest extends TestCase {
 
@@ -109,10 +109,10 @@ final class MediaUpdateTest extends TestCase {
 	}
 
 	/**
-	 * The registered `wp/media-update` ability.
+	 * The registered `core-experimental/media-update` ability.
 	 */
 	private function get_registered(): WP_Ability {
-		$ability = WP_Abilities_Registry::get_instance()->get_registered( 'wp/media-update' );
+		$ability = WP_Abilities_Registry::get_instance()->get_registered( 'core-experimental/media-update' );
 		self::assertNotNull( $ability, 'The ability should be registered through the Registrar.' );
 
 		return $ability;
@@ -125,7 +125,7 @@ final class MediaUpdateTest extends TestCase {
 	 * @return mixed The ability result.
 	 */
 	private function update( array $input = array() ) {
-		$ability = WP_Abilities_Registry::get_instance()->get_registered( 'wp/media-update' );
+		$ability = WP_Abilities_Registry::get_instance()->get_registered( 'core-experimental/media-update' );
 		self::assertNotNull( $ability, 'The ability should be registered through the Registrar.' );
 
 		return $ability->execute( $input );

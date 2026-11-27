@@ -9,7 +9,7 @@
  * that need a package-owned, non-public vehicle — the version floor and
  * `public_only` selection — drive the synthetic `test/registrar-synthetic`
  * entry through the engine's own registration funnel. Its `test/` prefix
- * can never collide with real manifest growth (`core/` or `wp/` entries).
+ * can never collide with real manifest growth (`core/` or `core-experimental/` entries).
  *
  * P8 adds category ownership to the same sequencing: the Registrar must
  * declare the manifest-declared categories itself, at priority 20 on

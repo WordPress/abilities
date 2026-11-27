@@ -21,7 +21,7 @@ final class Manifest {
 	/** Package version; must match the newest git tag. */
 	public const VERSION = '0.1.0';
 
-	/** Experimental tier: `wp/` prefix, no promises, iterating. */
+	/** Experimental tier: `core-experimental/` prefix, no promises, iterating. */
 	public const TIER_EXPERIMENTAL = 'experimental';
 
 	/** Stable tier: `core/` or `wordpress/` prefix, proposed to core, schema-frozen. */
@@ -42,7 +42,7 @@ final class Manifest {
 	 */
 	public static function all(): array {
 		return array(
-			'core/content-query'  => array(
+			'core/content-query'                => array(
 				'name'           => 'core/content-query',
 				/*
 				 * `::class` resolves to the FQCN without loading the class,
@@ -60,7 +60,7 @@ final class Manifest {
 				// the landed core work (wordpress-develop PR 12195) before release.
 				'proposal'       => 'https://github.com/WordPress/wordpress-develop/pull/12195',
 			),
-			'core/settings-get'   => array(
+			'core/settings-get'                 => array(
 				'name'           => 'core/settings-get',
 				'class'          => Settings\Settings_Get::class,
 				'category'       => 'site',
@@ -72,7 +72,7 @@ final class Manifest {
 				// Landed in trunk as b6512b1e8c (Trac #64605), developed in this PR.
 				'proposal'       => 'https://github.com/WordPress/wordpress-develop/pull/12141',
 			),
-			'core/users-query'    => array(
+			'core/users-query'                  => array(
 				'name'           => 'core/users-query',
 				'class'          => Users\Users_Query::class,
 				'category'       => 'user',
@@ -93,7 +93,7 @@ final class Manifest {
 			 * filing). The entries flip to core with `core_since` set once
 			 * the abilities land in an actual WordPress release.
 			 */
-			'core/content-create' => array(
+			'core/content-create'               => array(
 				'name'           => 'core/content-create',
 				'class'          => Content\Content_Create::class,
 				'category'       => 'content',
@@ -104,7 +104,7 @@ final class Manifest {
 				'renamed_from'   => null,
 				'proposal'       => 'https://github.com/WordPress/ai/pull/1025',
 			),
-			'core/content-update' => array(
+			'core/content-update'               => array(
 				'name'           => 'core/content-update',
 				'class'          => Content\Content_Update::class,
 				'category'       => 'content',
@@ -115,7 +115,7 @@ final class Manifest {
 				'renamed_from'   => null,
 				'proposal'       => 'https://github.com/WordPress/ai/pull/1025',
 			),
-			'core/content-delete' => array(
+			'core/content-delete'               => array(
 				'name'           => 'core/content-delete',
 				'class'          => Content\Content_Delete::class,
 				'category'       => 'content',
@@ -130,68 +130,68 @@ final class Manifest {
 			 * The media query below is a faithful port of WordPress/ai PR #1098
 			 * (author @jorgefilipecosta).
 			 *
-			 * Tier: experimental, incubating under the `wp/` prefix — the proposal
+			 * Tier: experimental, incubating under the `core-experimental/` prefix — the proposal
 			 * below is the PR's paper trail, but the ability has NOT landed in
 			 * core (`core_since` stays null and flips when core lands it), so its
 			 * name and schema carry no promises yet (NAME-LIFECYCLE.md). It uses
 			 * the package-authored `media` ability category (core trunk has no
 			 * media category; see Categories).
 			 */
-			'wp/media-query'      => array(
-				'name'           => 'wp/media-query',
+			'core-experimental/media-query'     => array(
+				'name'           => 'core-experimental/media-query',
 				'class'          => Media\Media_Query::class,
 				'category'       => 'media',
 				'tier'           => self::TIER_EXPERIMENTAL,
 				'min_wp_version' => '6.9',
 				'core_since'     => null,
 				'requires'       => array(),
-				'renamed_from'   => null,
+				'renamed_from'   => 'wp/media-query',
 				'proposal'       => 'https://github.com/WordPress/ai/pull/1098',
 			),
 			/*
 			 * The media writes below are a faithful port of WordPress/ai PR #1104
-			 * (author @jorgefilipecosta) on top of the `wp/media-query` field
+			 * (author @jorgefilipecosta) on top of the `core-experimental/media-query` field
 			 * projection: the abilities write attachments and answer with them
 			 * through the query's contract, in the edit context.
 			 *
-			 * Tier: experimental, incubating under the `wp/` prefix — the proposal
+			 * Tier: experimental, incubating under the `core-experimental/` prefix — the proposal
 			 * below is the PR's paper trail, but the abilities have NOT landed in
 			 * core (`core_since` stays null and flips when core lands them), so
 			 * their names and schemas carry no promises yet (NAME-LIFECYCLE.md).
 			 * They use the package-authored `media` ability category (see
 			 * Categories).
 			 */
-			'wp/media-upload'     => array(
-				'name'           => 'wp/media-upload',
+			'core-experimental/media-upload'    => array(
+				'name'           => 'core-experimental/media-upload',
 				'class'          => Media\Media_Upload::class,
 				'category'       => 'media',
 				'tier'           => self::TIER_EXPERIMENTAL,
 				'min_wp_version' => '6.9',
 				'core_since'     => null,
 				'requires'       => array(),
-				'renamed_from'   => null,
+				'renamed_from'   => 'wp/media-upload',
 				'proposal'       => 'https://github.com/WordPress/ai/pull/1104',
 			),
-			'wp/media-update'     => array(
-				'name'           => 'wp/media-update',
+			'core-experimental/media-update'    => array(
+				'name'           => 'core-experimental/media-update',
 				'class'          => Media\Media_Update::class,
 				'category'       => 'media',
 				'tier'           => self::TIER_EXPERIMENTAL,
 				'min_wp_version' => '6.9',
 				'core_since'     => null,
 				'requires'       => array(),
-				'renamed_from'   => null,
+				'renamed_from'   => 'wp/media-update',
 				'proposal'       => 'https://github.com/WordPress/ai/pull/1104',
 			),
-			'wp/media-delete'     => array(
-				'name'           => 'wp/media-delete',
+			'core-experimental/media-delete'    => array(
+				'name'           => 'core-experimental/media-delete',
 				'class'          => Media\Media_Delete::class,
 				'category'       => 'media',
 				'tier'           => self::TIER_EXPERIMENTAL,
 				'min_wp_version' => '6.9',
 				'core_since'     => null,
 				'requires'       => array(),
-				'renamed_from'   => null,
+				'renamed_from'   => 'wp/media-delete',
 				'proposal'       => 'https://github.com/WordPress/ai/pull/1104',
 			),
 			/*
@@ -203,20 +203,20 @@ final class Manifest {
 			 * names, per-setting stored-value sanitizing/omission) are already
 			 * in the PR #2 backport; nothing was ported for them.
 			 *
-			 * Tier: experimental, incubating under the `wp/` prefix — the proposal
+			 * Tier: experimental, incubating under the `core-experimental/` prefix — the proposal
 			 * below is the PR's paper trail, but the ability has NOT landed in
 			 * core (`core_since` stays null and flips when core lands it), so its
 			 * name and schema carry no promises yet (NAME-LIFECYCLE.md).
 			 */
-			'wp/settings-update'  => array(
-				'name'           => 'wp/settings-update',
+			'core-experimental/settings-update' => array(
+				'name'           => 'core-experimental/settings-update',
 				'class'          => Settings\Settings_Update::class,
 				'category'       => 'site',
 				'tier'           => self::TIER_EXPERIMENTAL,
 				'min_wp_version' => '6.9',
 				'core_since'     => null,
 				'requires'       => array(),
-				'renamed_from'   => null,
+				'renamed_from'   => 'wp/settings-update',
 				'proposal'       => 'https://github.com/WordPress/ai/pull/764',
 			),
 			/*
@@ -228,49 +228,49 @@ final class Manifest {
 			 * Users_Query backport byte-exact), with `format_user()` gaining the
 			 * write-side `$edit_context` parameter the PR's write path adds.
 			 *
-			 * Tier: experimental, incubating under the `wp/` prefix — the proposal
+			 * Tier: experimental, incubating under the `core-experimental/` prefix — the proposal
 			 * below is the PR's paper trail, but the abilities have NOT landed in
 			 * core (`core_since` stays null and flips when core lands them), so
 			 * their names and schemas carry no promises yet (NAME-LIFECYCLE.md).
 			 */
-			'wp/user-create'      => array(
-				'name'           => 'wp/user-create',
+			'core-experimental/user-create'     => array(
+				'name'           => 'core-experimental/user-create',
 				'class'          => Users\User_Create::class,
 				'category'       => 'user',
 				'tier'           => self::TIER_EXPERIMENTAL,
 				'min_wp_version' => '6.9',
 				'core_since'     => null,
 				'requires'       => array(),
-				'renamed_from'   => null,
+				'renamed_from'   => 'wp/user-create',
 				'proposal'       => 'https://github.com/WordPress/ai/pull/1105',
 			),
-			'wp/user-update'      => array(
-				'name'           => 'wp/user-update',
+			'core-experimental/user-update'     => array(
+				'name'           => 'core-experimental/user-update',
 				'class'          => Users\User_Update::class,
 				'category'       => 'user',
 				'tier'           => self::TIER_EXPERIMENTAL,
 				'min_wp_version' => '6.9',
 				'core_since'     => null,
 				'requires'       => array(),
-				'renamed_from'   => null,
+				'renamed_from'   => 'wp/user-update',
 				'proposal'       => 'https://github.com/WordPress/ai/pull/1105',
 			),
-			'wp/user-delete'      => array(
-				'name'           => 'wp/user-delete',
+			'core-experimental/user-delete'     => array(
+				'name'           => 'core-experimental/user-delete',
 				'class'          => Users\User_Delete::class,
 				'category'       => 'user',
 				'tier'           => self::TIER_EXPERIMENTAL,
 				'min_wp_version' => '6.9',
 				'core_since'     => null,
 				'requires'       => array(),
-				'renamed_from'   => null,
+				'renamed_from'   => 'wp/user-delete',
 				'proposal'       => 'https://github.com/WordPress/ai/pull/1105',
 			),
 			/*
 			 * The terms query below is a faithful port of WordPress/ai PR #1099
 			 * (author @jorgefilipecosta).
 			 *
-			 * Tier: experimental, incubating under the `wp/` prefix — the proposal
+			 * Tier: experimental, incubating under the `core-experimental/` prefix — the proposal
 			 * below is the PR's paper trail, but the ability has NOT landed in
 			 * core (`core_since` stays null and flips when core lands it), so its
 			 * name and schema carry no promises yet (NAME-LIFECYCLE.md). Its
@@ -278,20 +278,20 @@ final class Manifest {
 			 * pre-7.2 hosts), and the taxonomy opt-in `show_in_abilities` is
 			 * native on 7.2+ and polyfilled on 6.9-7.1.
 			 */
-			'wp/terms-query'      => array(
-				'name'           => 'wp/terms-query',
+			'core-experimental/terms-query'     => array(
+				'name'           => 'core-experimental/terms-query',
 				'class'          => Terms\Terms_Query::class,
 				'category'       => 'content',
 				'tier'           => self::TIER_EXPERIMENTAL,
 				'min_wp_version' => '6.9',
 				'core_since'     => null,
 				'requires'       => array( 'taxonomy_show_in_abilities' ),
-				'renamed_from'   => null,
+				'renamed_from'   => 'wp/terms-query',
 				'proposal'       => 'https://github.com/WordPress/ai/pull/1099',
 			),
 			/*
 			 * The term writes below are a faithful port of WordPress/ai PR #1103
-			 * (author @jorgefilipecosta) on top of the `wp/terms-query` field
+			 * (author @jorgefilipecosta) on top of the `core-experimental/terms-query` field
 			 * projection (PR #10): the abilities write terms of the same exposed
 			 * taxonomies and answer with them through the same contract, limited
 			 * by `fields`; a delete returns the deleted term under `previous`,
@@ -301,10 +301,10 @@ final class Manifest {
 			 * capability mapping denies `delete_term` against the term named by
 			 * the `default_{$taxonomy}` option, and `wp_delete_term()` refuses it.
 			 * The write helpers share the projection by verbatim copy (the
-			 * media-write sharing pattern, as Terms_Query is a hand-authored wp/*
+			 * media-write sharing pattern, as Terms_Query is a hand-authored core-experimental/*
 			 * class), with `private` relaxed to `protected` at the copy site.
 			 *
-			 * Tier: experimental, incubating under the `wp/` prefix — the proposal
+			 * Tier: experimental, incubating under the `core-experimental/` prefix — the proposal
 			 * below is the PR's paper trail, but the abilities have NOT landed in
 			 * core (`core_since` stays null and flips when core lands them), so
 			 * their names and schemas carry no promises yet (NAME-LIFECYCLE.md).
@@ -312,37 +312,37 @@ final class Manifest {
 			 * it on pre-7.2 hosts), and the taxonomy opt-in they ride is the
 			 * `taxonomy_show_in_abilities` support feature, as for the query.
 			 */
-			'wp/term-create'      => array(
-				'name'           => 'wp/term-create',
+			'core-experimental/term-create'     => array(
+				'name'           => 'core-experimental/term-create',
 				'class'          => Terms\Term_Create::class,
 				'category'       => 'content',
 				'tier'           => self::TIER_EXPERIMENTAL,
 				'min_wp_version' => '6.9',
 				'core_since'     => null,
 				'requires'       => array( 'taxonomy_show_in_abilities' ),
-				'renamed_from'   => null,
+				'renamed_from'   => 'wp/term-create',
 				'proposal'       => 'https://github.com/WordPress/ai/pull/1103',
 			),
-			'wp/term-update'      => array(
-				'name'           => 'wp/term-update',
+			'core-experimental/term-update'     => array(
+				'name'           => 'core-experimental/term-update',
 				'class'          => Terms\Term_Update::class,
 				'category'       => 'content',
 				'tier'           => self::TIER_EXPERIMENTAL,
 				'min_wp_version' => '6.9',
 				'core_since'     => null,
 				'requires'       => array( 'taxonomy_show_in_abilities' ),
-				'renamed_from'   => null,
+				'renamed_from'   => 'wp/term-update',
 				'proposal'       => 'https://github.com/WordPress/ai/pull/1103',
 			),
-			'wp/term-delete'      => array(
-				'name'           => 'wp/term-delete',
+			'core-experimental/term-delete'     => array(
+				'name'           => 'core-experimental/term-delete',
 				'class'          => Terms\Term_Delete::class,
 				'category'       => 'content',
 				'tier'           => self::TIER_EXPERIMENTAL,
 				'min_wp_version' => '6.9',
 				'core_since'     => null,
 				'requires'       => array( 'taxonomy_show_in_abilities' ),
-				'renamed_from'   => null,
+				'renamed_from'   => 'wp/term-delete',
 				'proposal'       => 'https://github.com/WordPress/ai/pull/1103',
 			),
 		);

@@ -30,16 +30,18 @@ final class ManifestTest extends TestCase {
 	}
 
 	/**
-	 * Experimental tier ⇒ wp/ prefix, and neither core/ nor wordpress/.
+	 * Experimental tier ⇒ core-experimental/ prefix, and neither core/ nor
+	 * wordpress/ (a literal `wp/` name is likewise barred: the pre-issue-18
+	 * experiment namespace migrated to core-experimental/).
 	 */
-	public function test_experimental_names_use_wp_prefix(): void {
+	public function test_experimental_names_use_core_experimental_prefix(): void {
 		$experimental = array();
 		foreach ( Manifest::all() as $name => $entry ) {
 			if ( Manifest::TIER_EXPERIMENTAL !== $entry['tier'] ) {
 				continue;
 			}
 			$experimental[] = $name;
-			self::assertTrue( str_starts_with( $name, 'wp/' ), sprintf( 'Experimental %s must start with wp/.', $name ) );
+			self::assertTrue( str_starts_with( $name, 'core-experimental/' ), sprintf( 'Experimental %s must start with core-experimental/.', $name ) );
 			self::assertFalse( str_starts_with( $name, 'core/' ) || str_starts_with( $name, 'wordpress/' ), sprintf( 'Experimental %s must not start with core/ or wordpress/.', $name ) );
 		}
 
@@ -56,11 +58,11 @@ final class ManifestTest extends TestCase {
 				array_filter(
 					$experimental,
 					static function ( string $name ): bool {
-						return ! str_starts_with( $name, 'wp/' );
+						return ! str_starts_with( $name, 'core-experimental/' );
 					}
 				)
 			),
-			'Every experimental name must carry the wp/ prefix.'
+			'Every experimental name must carry the core-experimental/ prefix.'
 		);
 	}
 

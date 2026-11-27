@@ -1,6 +1,6 @@
 <?php
 /**
- * Canonical WordPress abilities: `wp/settings-update` ability.
+ * Canonical WordPress abilities: `core-experimental/settings-update` ability.
  *
  * Ported from WordPress/ai PR #764 (https://github.com/WordPress/ai/pull/764) by @jorgefilipecosta.
  *
@@ -15,7 +15,7 @@ use WP_Error;
 use WordPress\Abilities\Abstract_Core_Ability;
 
 /**
- * Registers the `wp/settings-update` ability, which writes the settings
+ * Registers the `core-experimental/settings-update` ability, which writes the settings
  * `core/settings-get` reads (except the read-only `url` and `email`), and
  * answers with only the updated settings as `core/settings-get` reads them.
  *
@@ -47,7 +47,7 @@ final class Settings_Update extends Abstract_Core_Ability {
 	private const CATEGORY = 'site';
 
 	/**
-	 * Options `core/settings-get` reads but `wp/settings-update` does not write.
+	 * Options `core/settings-get` reads but `core-experimental/settings-update` does not write.
 	 *
 	 * A wrong `siteurl` makes wp-admin unreachable, and wp-admin only changes `admin_email` once
 	 * the new address confirms it.
@@ -71,7 +71,7 @@ final class Settings_Update extends Abstract_Core_Ability {
 	 * @return string
 	 */
 	protected function ability_name(): string {
-		return 'wp/settings-update';
+		return 'core-experimental/settings-update';
 	}
 
 	/**
@@ -450,7 +450,7 @@ final class Settings_Update extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Executes the `wp/settings-update` ability.
+	 * Executes the `core-experimental/settings-update` ability.
 	 *
 	 * Updates the settings as the settings endpoint does. The Abilities API has already rejected
 	 * input with an unknown setting or an invalid value, but a `wp_ability_validate_input` filter

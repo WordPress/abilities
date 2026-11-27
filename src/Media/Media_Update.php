@@ -1,6 +1,6 @@
 <?php
 /**
- * Canonical WordPress abilities: `wp/media-update` ability.
+ * Canonical WordPress abilities: `core-experimental/media-update` ability.
  *
  * Ported from WordPress/ai PR #1104 (https://github.com/WordPress/ai/pull/1104) by @jorgefilipecosta.
  *
@@ -13,8 +13,8 @@ namespace WordPress\Abilities\Media;
 use WP_Error;
 
 /**
- * Registers the `wp/media-update` ability, which updates a media item by ID
- * and answers with it through the `wp/media-query` field projection, in the
+ * Registers the `core-experimental/media-update` ability, which updates a media item by ID
+ * and answers with it through the `core-experimental/media-query` field projection, in the
  * edit context. All logic is shared with the sibling media write abilities in
  * {@see Abstract_Media_Write}, and this class only wires it into the authoring
  * surface.
@@ -28,7 +28,7 @@ final class Media_Update extends Abstract_Media_Write {
 	 * @return string
 	 */
 	protected function ability_name(): string {
-		return 'wp/media-update';
+		return 'core-experimental/media-update';
 	}
 
 	/**

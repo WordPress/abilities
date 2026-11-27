@@ -5,7 +5,7 @@
  * Ported from WordPress/ai PR #1099 (https://github.com/WordPress/ai/pull/1099)
  * by @jorgefilipecosta, on this package's Abstract_Core_Ability authoring
  * surface. The PR's `core/terms-query` name is not copied: the ability ships
- * under the experimental tier name `wp/terms-query` (see NAME-LIFECYCLE.md;
+ * under the experimental tier name `core-experimental/terms-query` (see NAME-LIFECYCLE.md;
  * the D7 name-lifecycle rule carries no aliases), and its category stays the
  * core-registered `content` category — everything else mirrors the PR as
  * written: labels, description, schemas, annotations, error codes, and the
@@ -33,7 +33,7 @@ use WP_Term;
 use WordPress\Abilities\Abstract_Core_Ability;
 
 /**
- * Registers the read-only `wp/terms-query` ability, which retrieves terms of a taxonomy
+ * Registers the read-only `core-experimental/terms-query` ability, which retrieves terms of a taxonomy
  * exposed to abilities via `show_in_abilities`. Supports fetching a single term by ID or by
  * taxonomy and slug, or querying the terms of one taxonomy filtered by search, parent, post,
  * emptiness, or included and excluded IDs.
@@ -90,7 +90,7 @@ final class Terms_Query extends Abstract_Core_Ability {
 	 * @return string
 	 */
 	protected function ability_name(): string {
-		return 'wp/terms-query';
+		return 'core-experimental/terms-query';
 	}
 
 	/**
@@ -218,7 +218,7 @@ final class Terms_Query extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Permission callback for the `wp/terms-query` ability.
+	 * Permission callback for the `core-experimental/terms-query` ability.
 	 *
 	 * Requires a logged-in user. A single-term request is denied unless the term exists in a
 	 * taxonomy exposed to abilities, and in the requested taxonomy when one is given. A
@@ -244,7 +244,7 @@ final class Terms_Query extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Executes the `wp/terms-query` ability.
+	 * Executes the `core-experimental/terms-query` ability.
 	 *
 	 * {@see WP_Ability::execute()} always runs {@see self::check_permission()} first, so
 	 * single-term requests are only resolved again here when reached through the unvalidated
@@ -748,7 +748,7 @@ final class Terms_Query extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Builds the input schema for the `wp/terms-query` ability.
+	 * Builds the input schema for the `core-experimental/terms-query` ability.
 	 *
 	 * The ability has three mutually exclusive modes, modeled as a `oneOf` so invalid
 	 * combinations are rejected rather than silently ignored:
@@ -833,7 +833,7 @@ final class Terms_Query extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Builds the output schema for the `wp/terms-query` ability.
+	 * Builds the output schema for the `core-experimental/terms-query` ability.
 	 *
 	 * Single-term mode returns the term object directly, while collection mode returns a
 	 * paginated wrapper. Both shapes reject unknown properties, which keeps a term from

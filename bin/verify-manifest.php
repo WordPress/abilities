@@ -147,7 +147,7 @@ function verify_manifest_structure(): array {
 /**
  * Tier and prefix rules (mirrors ManifestTest's experimental/stable tests).
  *
- * experimental ⇒ name starts wp/, and starts with neither core/ nor
+ * experimental ⇒ name starts core-experimental/, and starts with neither core/ nor
  * wordpress/. stable|core ⇒ name starts core/ or wordpress/. core + core/
  * ⇒ core_since and proposal set. stable + core/ ⇒ proposal set. Every
  * entry sets a non-empty min_wp_version. Unknown tier values are flagged;
@@ -178,8 +178,8 @@ function verify_manifest_tier_prefix_rules(): array {
 		}
 
 		if ( Manifest::TIER_EXPERIMENTAL === $tier ) {
-			if ( ! verify_manifest_starts_with( $name, 'wp/' ) ) {
-				$violations[] = $name . ' (tier experimental): must start with wp/.';
+			if ( ! verify_manifest_starts_with( $name, 'core-experimental/' ) ) {
+				$violations[] = $name . ' (tier experimental): must start with core-experimental/.';
 			}
 			if ( verify_manifest_starts_with( $name, 'core/' ) || verify_manifest_starts_with( $name, 'wordpress/' ) ) {
 				$violations[] = $name . ' (tier experimental): must not start with core/ or wordpress/.';

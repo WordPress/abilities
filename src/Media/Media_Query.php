@@ -5,7 +5,7 @@
  * Ported from WordPress/ai PR #1098 (https://github.com/WordPress/ai/pull/1098)
  * by @jorgefilipecosta, on this package's Abstract_Core_Ability authoring
  * surface. The PR's `core/media-query` name is not copied: the ability ships
- * under the experimental tier name `wp/media-query` (see NAME-LIFECYCLE.md),
+ * under the experimental tier name `core-experimental/media-query` (see NAME-LIFECYCLE.md),
  * and its category is the package-authored `media` category (core trunk has no
  * `media` ability category yet) — everything else mirrors the PR as written:
  * labels, description, schemas, annotations, error codes, and the documented
@@ -30,7 +30,7 @@ use WP_Query;
 use WordPress\Abilities\Abstract_Core_Ability;
 
 /**
- * Registers the read-only `wp/media-query` ability, which retrieves readable media items
+ * Registers the read-only `core-experimental/media-query` ability, which retrieves readable media items
  * (attachments). Supports fetching a single readable item by ID, or querying a paginated
  * collection filtered by search, media type, MIME type, parent, author, included or
  * excluded IDs, and status. Raw fields require edit access.
@@ -96,7 +96,7 @@ final class Media_Query extends Abstract_Core_Ability {
 	 * @return string
 	 */
 	protected function ability_name(): string {
-		return 'wp/media-query';
+		return 'core-experimental/media-query';
 	}
 
 	/**
@@ -201,7 +201,7 @@ final class Media_Query extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Permission callback for the `wp/media-query` ability.
+	 * Permission callback for the `core-experimental/media-query` ability.
 	 *
 	 * Requires an authenticated user and attachments shown in REST. A single item must
 	 * exist and be readable, and with raw fields also editable; a missing item is denied
@@ -227,7 +227,7 @@ final class Media_Query extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Executes the `wp/media-query` ability.
+	 * Executes the `core-experimental/media-query` ability.
 	 *
 	 * {@see WP_Ability::execute()} always runs {@see self::check_permission()} first, so a
 	 * single item is only looked up again here, while each collection row is checked. The
@@ -1012,7 +1012,7 @@ final class Media_Query extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Builds the input schema for the `wp/media-query` ability.
+	 * Builds the input schema for the `core-experimental/media-query` ability.
 	 *
 	 * The ability has two mutually exclusive modes, modeled as a `oneOf` so invalid
 	 * combinations are rejected rather than silently ignored: get a single item by `id`,
@@ -1270,7 +1270,7 @@ final class Media_Query extends Abstract_Core_Ability {
 	}
 
 	/**
-	 * Builds the output schema for the `wp/media-query` ability.
+	 * Builds the output schema for the `core-experimental/media-query` ability.
 	 *
 	 * No field is marked required because the `fields` input lets the caller request any
 	 * subset. Single-item mode returns the item directly, while query mode returns a

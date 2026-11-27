@@ -1,6 +1,6 @@
 <?php
 /**
- * Canonical WordPress abilities: `wp/media-delete` ability.
+ * Canonical WordPress abilities: `core-experimental/media-delete` ability.
  *
  * Ported from WordPress/ai PR #1104 (https://github.com/WordPress/ai/pull/1104) by @jorgefilipecosta.
  *
@@ -13,9 +13,9 @@ namespace WordPress\Abilities\Media;
 use WP_Error;
 
 /**
- * Registers the `wp/media-delete` ability, which deletes a media item by ID.
+ * Registers the `core-experimental/media-delete` ability, which deletes a media item by ID.
  * All logic is shared with the sibling media write abilities in
- * {@see Abstract_Media_Write} (which also reuses the `wp/media-query` field
+ * {@see Abstract_Media_Write} (which also reuses the `core-experimental/media-query` field
  * projection), and this class only wires it into the authoring surface.
  *
  * @package WordPress\Abilities
@@ -27,7 +27,7 @@ final class Media_Delete extends Abstract_Media_Write {
 	 * @return string
 	 */
 	protected function ability_name(): string {
-		return 'wp/media-delete';
+		return 'core-experimental/media-delete';
 	}
 
 	/**

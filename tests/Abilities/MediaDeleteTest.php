@@ -1,6 +1,6 @@
 <?php
 /**
- * Tests: `wp/media-delete` (port of WordPress/ai PR #1104's delete tests, on
+ * Tests: `core-experimental/media-delete` (port of WordPress/ai PR #1104's delete tests, on
  * this package's per-ability contract shape).
  *
  * Runs under both wp-env matrix environments: trunk (7.2-dev) and stable
@@ -26,7 +26,7 @@ use WordPress\Abilities\Registrar;
 use Yoast\PHPUnitPolyfills\TestCases\TestCase;
 
 /**
- * Contract tests for `wp/media-delete`.
+ * Contract tests for `core-experimental/media-delete`.
  */
 final class MediaDeleteTest extends TestCase {
 
@@ -110,10 +110,10 @@ final class MediaDeleteTest extends TestCase {
 	}
 
 	/**
-	 * The registered `wp/media-delete` ability.
+	 * The registered `core-experimental/media-delete` ability.
 	 */
 	private function get_registered(): WP_Ability {
-		$ability = WP_Abilities_Registry::get_instance()->get_registered( 'wp/media-delete' );
+		$ability = WP_Abilities_Registry::get_instance()->get_registered( 'core-experimental/media-delete' );
 		self::assertNotNull( $ability, 'The ability should be registered through the Registrar.' );
 
 		return $ability;
@@ -126,7 +126,7 @@ final class MediaDeleteTest extends TestCase {
 	 * @return mixed The ability result.
 	 */
 	private function delete( array $input = array() ) {
-		$ability = WP_Abilities_Registry::get_instance()->get_registered( 'wp/media-delete' );
+		$ability = WP_Abilities_Registry::get_instance()->get_registered( 'core-experimental/media-delete' );
 		self::assertNotNull( $ability, 'The ability should be registered through the Registrar.' );
 
 		return $ability->execute( $input );
@@ -259,7 +259,7 @@ final class MediaDeleteTest extends TestCase {
 
 		$schema      = $ability->get_input_schema();
 		$output      = $ability->get_output_schema();
-		$query_types = wp_list_pluck( WP_Abilities_Registry::get_instance()->get_registered( 'wp/media-query' )->get_output_schema()['oneOf'][0]['properties'], 'type' );
+		$query_types = wp_list_pluck( WP_Abilities_Registry::get_instance()->get_registered( 'core-experimental/media-query' )->get_output_schema()['oneOf'][0]['properties'], 'type' );
 
 		self::assertSame( array( 'id' ), $schema['required'], 'Only the ID should be required.' );
 		self::assertArrayHasKey( 'force', $schema['properties'], 'The delete input should take the force key.' );
