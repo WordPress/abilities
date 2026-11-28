@@ -22,6 +22,9 @@ This document is the source of truth for the shape of the core abilities: their 
 | [`core/term-create`](#coreterm-create) | Proposed | content | `false` | `false` | `false` | `POST` |
 | [`core/term-update`](#coreterm-update) | Proposed | content | `false` | `false` | `true` | `POST` |
 | [`core/term-delete`](#coreterm-delete) | Proposed | content | `false` | `true` | `true` | `DELETE` |
+| [`core/comments-query`](#corecomments-query) | Proposed | content | `true` | `false` | `true` | `GET` |
+| [`core/comment-create`](#corecomment-create) | Proposed | content | `false` | `false` | `false` | `POST` |
+| [`core/comment-update`](#corecomment-update) | Proposed | content | `false` | `false` | `true` | `POST` |
 
 `destructive` is `true` for an ability that removes something: the four `delete` abilities, which remove an entity, and `core/settings-update`, where a `null` value deletes the stored value of a setting without a default. A `create` or any other `update` is `false`, although an update overwrites the values it is given and can have a wide effect, such as a new role in `core/user-update`. This is narrower than the definition in core, where `false` means "only additive updates". The reason is the REST method: `destructive` and `idempotent` together make the method `DELETE`, so an idempotent update marked destructive would have to be called with `DELETE`. `core/settings-update` and `core/user-delete` are not idempotent, so their method is `POST`.
 
@@ -3010,4 +3013,410 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
 }
 ```
 
+</details>
+
+## Comment abilities
+
+These proposals cover reader comments on posts whose type opts into `show_in_abilities`. WordPress also stores editorial notes, reactions, pingbacks and trackbacks as comments. These three abilities accept ordinary reader comments only, including legacy rows with an empty comment type.
+
+All three use the same comment fields. The default selection is `id, post, parent, author.name, date, content.rendered, status`. An omitted or empty `fields` selects the defaults. An explicit selection always includes `id`, including on writes. Selecting `content` requests both subfields. Return `content.raw` only to callers allowed to edit the comment. Omit an object when none of its selected subfields can be returned. `date.site` and `date.gmt` express the creation time with a UTC offset, or `null` when the date is unavailable. A guest author has `author.id` of `0`. Author email and IP address are outside this proposal.
+
+### `core/comments-query`
+
+An ID lookup uses the same filters and response shape as a collection. Filters combine with AND, and values within `ids` or `status` combine with OR. `where.post` selects one post, `where.parent` selects direct replies, and a parent of `0` selects top-level comments. Omitting `where.status` selects approved comments, including for an ID lookup.
+
+Readers can query approved comments on posts they can read, subject to the post's visibility and password protection. Requesting any of `hold`, `spam` or `trash` requires `moderate_comments` and the caller must be allowed to read each returned comment. Apply the same type and visibility rules to items and totals before paginating. An unknown, unreadable or non-reader comment ID contributes no row or count.
+
+Order by comment date (GMT), newest first, then by descending ID for ties. Pages start at 1. The default page size is 10, or 100 for an explicit list of IDs. An empty match returns an empty list and zero totals. A page beyond the last page of a nonempty result returns a 404.
+
+**Look up a comment by ID**
+
+```jsonc
+// Input
+{ "where": { "ids": [ 71 ] }, "fields": [ "content.rendered" ] }
+// Output
+{
+  "items": [ { "id": 71, "content": { "rendered": "<p>Is the meeting on Monday?</p>" } } ],
+  "pagination": { "total": 1, "total_pages": 1 }
+}
+```
+
+**Read direct replies to comment 71**
+
+```jsonc
+// Input
+{
+  "where": { "post": 42, "parent": 71 },
+  "pagination": { "per_page": 1 },
+  "fields": [ "parent", "author.name" ]
+}
+// Output
+{
+  "items": [ { "id": 73, "parent": 71, "author": { "name": "Maya" } } ],
+  "pagination": { "total": 2, "total_pages": 2 }
+}
+```
+
+**A subscriber asks for the moderation queue**
+
+```jsonc
+// Input
+{ "where": { "status": [ "hold" ] } }
+// Error
+{
+  "code": "comment_cannot_filter_by_status",
+  "message": "Sorry, you are not allowed to filter comments by this status.",
+  "data": { "status": 403 }
+}
+```
+
+<details>
+<summary><b>Input schema</b></summary>
+
+```json
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "where": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "minItems": 1,
+          "maxItems": 100,
+          "items": { "type": "integer", "minimum": 1 }
+        },
+        "post": { "type": "integer", "minimum": 1 },
+        "parent": { "type": "integer", "minimum": 0 },
+        "status": {
+          "type": "array",
+          "uniqueItems": true,
+          "minItems": 1,
+          "items": { "type": "string", "enum": [ "approved", "hold", "spam", "trash" ] }
+        }
+      }
+    },
+    "fields": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "id",
+          "post",
+          "parent",
+          "author",
+          "author.id",
+          "author.name",
+          "date",
+          "date.site",
+          "date.gmt",
+          "content",
+          "content.raw",
+          "content.rendered",
+          "status",
+          "link"
+        ]
+      }
+    },
+    "pagination": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "page": { "type": "integer", "minimum": 1 },
+        "per_page": { "type": "integer", "minimum": 1, "maximum": 100 }
+      }
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Output schema</b></summary>
+
+```json
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [ "items", "pagination" ],
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [ "id" ],
+        "properties": {
+          "id": { "type": "integer", "minimum": 1 },
+          "post": { "type": "integer", "minimum": 1 },
+          "parent": { "type": "integer", "minimum": 0 },
+          "author": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": { "id": { "type": "integer", "minimum": 0 }, "name": { "type": "string" } }
+          },
+          "date": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "site": { "type": [ "string", "null" ], "format": "date-time" },
+              "gmt": { "type": [ "string", "null" ], "format": "date-time" }
+            }
+          },
+          "content": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": { "raw": { "type": "string" }, "rendered": { "type": "string" } }
+          },
+          "status": { "type": "string", "enum": [ "approved", "hold", "spam", "trash" ] },
+          "link": { "type": "string", "format": "uri" }
+        }
+      }
+    },
+    "pagination": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [ "total", "total_pages" ],
+      "properties": { "total": { "type": "integer", "minimum": 0 }, "total_pages": { "type": "integer", "minimum": 0 } }
+    }
+  }
+}
+```
+</details>
+
+### `core/comment-create`
+
+Create a reader comment as the signed-in user. The post must accept reader comments from that user under the normal WordPress discussion rules, including post visibility, password protection and open comments. A positive `data.parent` identifies a readable reader comment on the same post. Omit it or pass `0` for a top-level comment. Reject an invalid parent before inserting anything.
+
+`data.content` is the comment text. Apply the usual WordPress comment filters and reject empty content after sanitizing. WordPress assigns the author and determines moderation status. Return the stored status when selected, including `hold` for a queued comment. Duplicate and flood checks still apply. A repeated create can return a duplicate-comment error.
+
+**Reply on a site that queues the comment for moderation**
+
+```jsonc
+// Input
+{
+  "data": { "post": 42, "parent": 71, "content": "The meeting is on Mondya." },
+  "fields": [ "post", "parent", "status" ]
+}
+// Output
+{ "id": 74, "post": 42, "parent": 71, "status": "hold" }
+```
+
+**Reply after comments have closed**
+
+```jsonc
+// Input
+{ "data": { "post": 42, "parent": 71, "content": "Has the time changed?" } }
+// Error
+{
+  "code": "rest_comment_closed",
+  "message": "Sorry, comments are closed for this item.",
+  "data": { "status": 403 }
+}
+```
+
+<details>
+<summary><b>Input schema</b></summary>
+
+```json
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [ "data" ],
+  "properties": {
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [ "post", "content" ],
+      "properties": {
+        "post": { "type": "integer", "minimum": 1 },
+        "parent": { "type": "integer", "minimum": 0 },
+        "content": { "type": "string", "minLength": 1 }
+      }
+    },
+    "fields": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "id",
+          "post",
+          "parent",
+          "author",
+          "author.id",
+          "author.name",
+          "date",
+          "date.site",
+          "date.gmt",
+          "content",
+          "content.raw",
+          "content.rendered",
+          "status",
+          "link"
+        ]
+      }
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Output schema</b></summary>
+
+```json
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [ "id" ],
+  "properties": {
+    "id": { "type": "integer", "minimum": 1 },
+    "post": { "type": "integer", "minimum": 1 },
+    "parent": { "type": "integer", "minimum": 0 },
+    "author": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "id": { "type": "integer", "minimum": 0 }, "name": { "type": "string" } }
+    },
+    "date": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "site": { "type": [ "string", "null" ], "format": "date-time" },
+        "gmt": { "type": [ "string", "null" ], "format": "date-time" }
+      }
+    },
+    "content": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "raw": { "type": "string" }, "rendered": { "type": "string" } }
+    },
+    "status": { "type": "string", "enum": [ "approved", "hold", "spam", "trash" ] },
+    "link": { "type": "string", "format": "uri" }
+  }
+}
+```
+</details>
+
+### `core/comment-update`
+
+Edit the text of an approved or pending reader comment. The caller must be signed in, able to read its post, and allowed to edit the comment under Core's ordinary comment rules (`moderate_comments` or `edit_comment` for that ID). Authorship alone does not grant edit access. Apply the same content checks as on create.
+
+Only `data.content` can be changed. The comment keeps its author, post, parent and moderation status. Repeating the same correction succeeds with the same stored text and status. An ID belonging to an editorial note or another excluded type gets the same not-found response as a nonexistent ID.
+
+**Correct a typo while the reply is still in moderation**
+
+```jsonc
+// Input
+{
+  "where": { "id": 74 },
+  "data": { "content": "The meeting is on Monday." },
+  "fields": [ "content.raw", "status" ]
+}
+// Output
+{ "id": 74, "content": { "raw": "The meeting is on Monday." }, "status": "hold" }
+```
+
+**Edit an ID that is not a reader comment**
+
+```jsonc
+// Input
+{ "where": { "id": 90 }, "data": { "content": "Corrected text." } }
+// Error
+{
+  "code": "comment_not_found",
+  "message": "The requested comment was not found.",
+  "data": { "status": 404 }
+}
+```
+
+<details>
+<summary><b>Input schema</b></summary>
+
+```json
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [ "where", "data" ],
+  "properties": {
+    "where": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [ "id" ],
+      "properties": { "id": { "type": "integer", "minimum": 1 } }
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [ "content" ],
+      "properties": { "content": { "type": "string", "minLength": 1 } }
+    },
+    "fields": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "id",
+          "post",
+          "parent",
+          "author",
+          "author.id",
+          "author.name",
+          "date",
+          "date.site",
+          "date.gmt",
+          "content",
+          "content.raw",
+          "content.rendered",
+          "status",
+          "link"
+        ]
+      }
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Output schema</b></summary>
+
+```json
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [ "id" ],
+  "properties": {
+    "id": { "type": "integer", "minimum": 1 },
+    "post": { "type": "integer", "minimum": 1 },
+    "parent": { "type": "integer", "minimum": 0 },
+    "author": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "id": { "type": "integer", "minimum": 0 }, "name": { "type": "string" } }
+    },
+    "date": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "site": { "type": [ "string", "null" ], "format": "date-time" },
+        "gmt": { "type": [ "string", "null" ], "format": "date-time" }
+      }
+    },
+    "content": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "raw": { "type": "string" }, "rendered": { "type": "string" } }
+    },
+    "status": { "type": "string", "enum": [ "approved", "hold", "spam", "trash" ] },
+    "link": { "type": "string", "format": "uri" }
+  }
+}
+```
 </details>
