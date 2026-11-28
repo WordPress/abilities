@@ -1707,7 +1707,9 @@ Errors are `WP_Error` objects. The `// Error` part of an example shows one as th
   "type": "object",
   "additionalProperties": false,
   "required": [ "outcome" ],
-  "properties": { "outcome": { "type": "string" } }
+  "properties": {
+    "outcome": { "type": "string", "enum": [ "deleted", "removed" ] }
+  }
 }
 ```
 
